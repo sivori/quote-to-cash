@@ -45,3 +45,9 @@ Wrote the Midjourney prompt (in the reply, not the repo). Capitalised the nav la
 native select with a listbox showing a card mark per test card; the four cards are now four brands
 (Visa, Mastercard, Amex, Discover) drawn as schematic brand-coloured marks rather than the
 trademarked logos.
+
+**6.**
+
+> Open all external links in a new target, eg. _blank
+
+Every external link in the footer now has `target="_blank" rel="noopener"`.

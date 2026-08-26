@@ -30,3 +30,9 @@ reminder and a warning, and collected on attempt 3.
 Clarifying answers (via the question prompt): review first, then apply · adopt a component library
 only if Cloudflare has a usable one · developers.cloudflare.com / dash product UI is authoritative
 over the marketing site · light mode only. Spawned a research agent with that brief.
+
+**4.**
+
+> To make the demo compelling, let's be more concise with the introduction text to convey the functional flow without overwhelming the user.
+
+Cut the hero to one line naming the flow, and each section's help text to a sentence or two.

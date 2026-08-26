@@ -74,12 +74,12 @@
 </header>
 <div class="hero">
   <h2>Type a deal. Watch it get paid.</h2>
-  <p>An LLM turns the sentence into a structured quote. Deterministic code prices it. A Cloudflare Workflow carries it through approval, invoicing, payment and dunning — pausing for a human when the number is big enough.</p>
+  <p>Plain English → quote → approval → invoice → payment → dunning. One sentence in, a paid deal out.</p>
 </div>
 <main>
   <section>
     <h2>1 · Describe the deal</h2>
-    <p class="help">Llama 3.3 on Workers AI extracts products, quantities, region and term into a schema-checked structure. It names things; it never prices them. Anything it can't map is flagged, not guessed.</p>
+    <p class="help">Llama 3.3 reads the sentence; code does the pricing. Try a chip or type your own.</p>
     <div class="chips">
       <button class="chip" onclick="ask(this.textContent)">50 Pro seats, 20 TB egress, EU, annual</button>
       <button class="chip" onclick="ask(this.textContent)">5 Pro seats monthly in the US</button>
@@ -91,7 +91,7 @@
   </section>
   <section>
     <h2>2 · Pipeline &amp; deal history</h2>
-    <p class="help">Each deal is one Workflow instance: policy → <b>approval</b> (a Durable Object holds the pending state while the Workflow waits on <code>waitForEvent</code>) → invoice → payment → dunning with 1d / 3d / 7d backoff and escalating notices. Every step is idempotent, and this customer's Durable Object keeps the full history. Choose a test card in the header to script the payment outcome.</p>
+    <p class="help">One Workflow per deal. Deals of $10,000+ pause for your approval. Pick a test card in the header to script the payment — declines trigger dunning.</p>
     <div id="deals"><div class="empty">No deals yet.</div></div>
   </section>
 </main>

@@ -152,3 +152,13 @@ EU-region deals are now quoted in EUR: the price book carries a per-region curre
 (0.92, in basis points) so unit prices convert deterministically before rating, and every amount is
 formatted per currency (`26.838,24 €` vs `$29,172.00`) in the UI, assistant reply, notifications,
 CSV (with a currency column) and PDF (€ mapped to WinAnsi). Tests updated for both currencies.
+
+**20.**
+
+> For this app, cap daily token spend at $5 as there is no authentication for the demo. Ask clarifying questions or propose other improvements.
+
+Clarifying answers (via the question prompt): in-app budget Durable Object · deterministic fallback
+parser at the cap · per-IP quota too · visible meter. Built `Budget` (singleton DO: per-day spend
+in micro-dollars from the model's reported usage at Workers AI's published rates, per-IP daily
+quota, 1 s burst limit), `parseDeterministic` (catalog-alias keyword parser used when the LLM is
+paused, with tests on the chip phrasings), `/api/budget`, and a footer meter.

@@ -63,6 +63,15 @@ npm run deploy
 
 Config lives in [`wrangler.jsonc`](wrangler.jsonc): `APPROVAL_THRESHOLD_CENTS`, `SECONDS_PER_DAY`, `MODEL`.
 
+## Spend guard (it's a public demo)
+
+There is no login, so the LLM is metered. A singleton `Budget` Durable Object ([`src/budget.ts`](src/budget.ts)) prices every Workers AI call from the `usage` the model reports, at the [published per-token rates](https://developers.cloudflare.com/workers-ai/platform/pricing/), in integer micro-dollars:
+
+- **$5 per UTC day** across all visitors (`AI_DAILY_CAP_USD`)
+- **40 quotes per IP per day** and **one per second** (`AI_IP_DAILY_CALLS`, `AI_BURST_MS`)
+
+Over the cap, quoting keeps working: a deterministic keyword parser over the catalog aliases ([`parseDeterministic`](src/parse.ts)) takes the LLM's place and the reply says so. The footer shows today's spend against the cap.
+
 ## What's deliberately out of scope
 
 Real payments (the simulator's `charge()` has the shape a Stripe PaymentIntents call would replace), tax, multi-currency, and a customer-facing explain-my-invoice assistant. Each is a bounded addition; none changes the pipeline.

@@ -12,11 +12,25 @@
     "APPROVAL_THRESHOLD_CENTS": "1000000",
     // Dunning schedule is written in days. This is how many SECONDS one day takes in this deployment.
     // Production: 86400. Demo: 5, so the whole 1d/3d/7d sequence plays out in under a minute.
-    "SECONDS_PER_DAY": "5"
+    "SECONDS_PER_DAY": "5",
+    // Spend guard for an unauthenticated demo. Prices are Workers AI's published USD per million
+    // tokens for the model above (developers.cloudflare.com/workers-ai/platform/pricing).
+    "AI_DAILY_CAP_USD": "5",
+    "AI_PRICE_IN_PER_M": "0.293",
+    "AI_PRICE_OUT_PER_M": "2.253",
+    "AI_IP_DAILY_CALLS": "40",
+    "AI_BURST_MS": "1000"
   },
   // One CustomerAccount per customer: deal history, pending approvals, invoices, payments, notifications.
-  "durable_objects": { "bindings": [{ "name": "ACCOUNT", "class_name": "CustomerAccount" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["CustomerAccount"] }],
+  "durable_objects": { "bindings": [
+    { "name": "ACCOUNT", "class_name": "CustomerAccount" },
+    // Singleton spend guard: daily AI budget, per-IP quota, burst limit.
+    { "name": "BUDGET", "class_name": "Budget" }
+  ] },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["CustomerAccount"] },
+    { "tag": "v2", "new_sqlite_classes": ["Budget"] }
+  ],
   // One QuoteToCash Workflow instance per deal: price → policy → (approval) → invoice → payment → dunning.
   "workflows": [{ "name": "quote-to-cash", "binding": "PIPELINE", "class_name": "QuoteToCash" }],
   "observability": { "enabled": true }

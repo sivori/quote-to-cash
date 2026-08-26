@@ -44,14 +44,40 @@ Rules:
 - notes: anything you could not map to a product, briefly; else null.
 - Do NOT compute or mention prices. Respond with JSON only.`;
 
-export async function parseDeal(env: Env, message: string): Promise<ParsedDeal> {
+export interface ParseResult { deal: ParsedDeal; usage: { prompt_tokens: number; completion_tokens: number } }
+
+export async function parseDeal(env: Env, message: string): Promise<ParseResult> {
   const res = (await env.AI.run(env.MODEL as any, {
     messages: [{ role: "system", content: SYSTEM }, { role: "user", content: message.slice(0, 2000) }],
     response_format: { type: "json_schema", json_schema: SCHEMA },
     max_tokens: 400,
-  })) as { response?: unknown };
+  })) as { response?: unknown; usage?: { prompt_tokens?: number; completion_tokens?: number } };
   const raw = typeof res.response === "string" ? JSON.parse(res.response) : res.response;
-  return validate(raw);
+  // If the runtime omits usage, assume the request's ceiling so the cap errs on the safe side.
+  const usage = { prompt_tokens: res.usage?.prompt_tokens ?? 1500, completion_tokens: res.usage?.completion_tokens ?? 400 };
+  return { deal: validate(raw), usage };
+}
+
+/**
+ * Deterministic fallback used when the AI budget is exhausted: "<number> <catalog alias>" pairs,
+ * region and term keywords, "for <Name>". It handles the phrasings a demo visitor is likely to
+ * type and flags everything else — it never guesses a product.
+ */
+export function parseDeterministic(message: string): ParsedDeal {
+  const text = message.toLowerCase();
+  const lines: { product: string; quantity: number }[] = [];
+  const aliases = CATALOG.flatMap((c) => c.aliases.map((a) => ({ alias: a, label: c.label }))).sort((a, b) => b.alias.length - a.alias.length);
+  let rest = text;
+  for (const { alias, label } of aliases) {
+    const re = new RegExp(`(\\d[\\d,\\.]*)\\s*(?:x\\s*)?(?:tb\\s+)?${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "g");
+    rest = rest.replace(re, (_m, n: string) => { lines.push({ product: label, quantity: Number(n.replace(/[,]/g, "")) }); return " "; });
+  }
+  const region = /\bapac\b|asia|pacific|singapore|tokyo|sydney/.test(text) ? "APAC" : /\beu\b|europe|frankfurt|london|paris|amsterdam/.test(text) ? "EU" : /\bus\b|usa|united states|america/.test(text) ? "US" : "unknown";
+  const term = /3[- ]?year|three[- ]?year|36[- ]?month|multi[- ]?year/.test(text) ? "three_year" : /annual|yearly|1[- ]?year|one[- ]?year|12[- ]?month/.test(text) ? "annual" : /month/.test(text) ? "monthly" : "unknown";
+  const name = message.match(/\bfor\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,3})/)?.[1] ?? null;
+  const leftover = rest.replace(/[^a-z]+/g, " ").trim();
+  const noise = /^(?:\s*(?:and|for|in|the|a|an|with|seats?|months?|years?|annual|monthly|eu|us|apac|europe|asia|pacific|plus|of|x|tb|deal|please|quote|me|our|we|need|want|company|team)\s*)*$/;
+  return validate({ lines, region, term, customerName: name, paymentMethod: null, notes: leftover && !noise.test(leftover) ? `could not map: "${leftover.slice(0, 80)}"` : null });
 }
 
 /** Map model output onto the catalog; anything that doesn't fit becomes `unresolved`, not a guess. */

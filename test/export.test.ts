@@ -28,7 +28,7 @@ describe("exports", () => {
     expect(text.trim().endsWith("%%EOF")).toBe(true);
     expect(text).toContain("Deal history - acme");
     // "10.322,40 €" with NBSP and € as WinAnsi bytes 0xA0 and 0x80 — check the raw bytes.
-    const needle = [...Buffer.from("10.322,40", "latin1"), 0xa0, 0x80];
+    const needle = [...new TextEncoder().encode("10.322,40"), 0xa0, 0x80];
     const hit = pdf.findIndex((_, i) => needle.every((b, j) => pdf[i + j] === b));
     expect(hit).toBeGreaterThan(-1);
     // xref offsets must point at "N 0 obj"

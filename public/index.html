@@ -167,6 +167,9 @@
   .events li.fail .k { color:var(--danger-text) } .events li.ok .k { color:var(--success-text) }
   .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:40px 24px; text-align:center }
   .empty b { display:block; font-size:14px; font-weight:600; margin-bottom:2px } .empty span { font-size:13px; color:var(--subtle) }
+  .meter { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--subtle); margin-bottom:8px }
+  .meter i { display:inline-block; width:120px; height:6px; background:var(--hairline); border-radius:3px; overflow:hidden } .meter i b { display:block; height:100%; background:var(--orange) }
+  .msg em { color:var(--subtle) }
   footer { text-align:center; color:var(--subtle); font-size:13px; padding:8px 20px 32px } footer a { color:var(--ink); text-decoration:none } footer a:hover { text-decoration:underline }
 </style>
 </head>
@@ -217,7 +220,7 @@
     <button type="button" class="danger" id="clearGo" onclick="doClear()">Delete everything</button>
   </div>
 </dialog>
-<footer>Built on <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers/">Workers</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workflows/">Workflows</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> &nbsp;|&nbsp; <a target="_blank" rel="noopener" href="https://github.com/sivori/quote-to-cash">source</a></footer>
+<footer><span id="budget" class="meter" title="Daily Workers AI spend for this public demo; past the cap a keyword parser takes over until 00:00 UTC"></span><br>Built on <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers/">Workers</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workflows/">Workflows</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> &nbsp;|&nbsp; <a target="_blank" rel="noopener" href="https://github.com/sivori/quote-to-cash">source</a></footer>
 <script>
 const $ = s => document.querySelector(s);
 const cid = () => $('#customer').value.trim() || 'acme';
@@ -244,7 +247,7 @@ fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); });
 // Minimal, safe rendering of the assistant's plain-text reply: paragraphs on blank lines,
 // "• " lines become a list, **bold** is honoured, everything else is escaped.
 const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function inline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+function inline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/^_(.+)_$/, '<em>$1</em>'); }
 function render(text) {
   // Group consecutive "• " lines into a list and every other line into its own paragraph, so
   // replies written before paragraph breaks existed still lay out cleanly.
@@ -322,7 +325,11 @@ async function doClear() {
 function toggle(id) { const on = !open.has(id); on ? open.add(id) : open.delete(id); const el = document.getElementById(id); el.classList.toggle('open', on); el.querySelector('.head').setAttribute('aria-expanded', String(on)); }
 async function decide(id, decision) { await api('POST', `/deals/${id}/decision`, { decision, by: 'ui' }); refresh(); }
 $('#customer').onchange = refresh;
-refresh(); setInterval(refresh, 2500);
+async function budgetMeter() {
+  try { const b = await fetch('/api/budget').then(r => r.json()); const pct = Math.min(100, b.spentMicros / b.capMicros * 100);
+    $('#budget').innerHTML = `AI budget today ${(b.spentMicros / 1e6).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 4 })} / ${(b.capMicros / 1e6).toLocaleString('en-US', { style: 'currency', currency: 'USD' })} · ${b.calls} call${b.calls === 1 ? '' : 's'}${b.llmAvailable ? '' : ' · LLM paused until 00:00 UTC'} <i><b style="width:${pct}%"></b></i>`; } catch {}
+}
+refresh(); budgetMeter(); setInterval(refresh, 2500); setInterval(budgetMeter, 10000);
 </script>
 </body>
 </html>

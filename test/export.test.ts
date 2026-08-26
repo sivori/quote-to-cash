@@ -27,7 +27,7 @@ describe("exports", () => {
     expect(text).toContain("/Type /Catalog");
     expect(text.trim().endsWith("%%EOF")).toBe(true);
     expect(text).toContain("Deal history - acme");
-    expect(text).toContain("10.322,40\u00a0\x80"); // € as WinAnsi 0x80
+    expect(text).toContain("10.322,40\u00a0\u0080"); // € is written as WinAnsi byte 0x80
     // xref offsets must point at "N 0 obj"
     const startxref = Number(text.match(/startxref\n(\d+)/)![1]);
     expect(text.slice(startxref, startxref + 4)).toBe("xref");

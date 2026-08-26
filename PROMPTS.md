@@ -194,3 +194,12 @@ between retries on the chosen strategy. The deal records the plan and every tool
 timeline shows them and the reply carries the agent's rationale. Two production fixes on the way:
 Workers AI requires OpenAI-shaped tool messages (`tool_calls[].function`, `tool_call_id`), and the
 discount tool takes a percent rather than basis points after the model sent `"10"` meaning 10%.
+
+**24.**
+
+> Current session caps are too restrictive.
+
+Root cause: the per-IP quota counted LLM calls, and the agent loop makes four or five per quote, so
+40 "calls" was about eight deals. The quota now counts quotes (recorded once, at parse time) and is
+150 per IP per day; the burst limit is 400 ms. The $5 daily spend cap is unchanged — a quote costs
+about a tenth of a cent even with the agent loop.

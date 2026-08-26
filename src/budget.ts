@@ -32,7 +32,7 @@ export class Budget extends DurableObject<Env> {
   private cfg() {
     return {
       capMicros: Math.round(Number(this.env.AI_DAILY_CAP_USD) * 1_000_000),
-      ipDaily: Number(this.env.AI_IP_DAILY_CALLS),
+      ipDaily: Number(this.env.AI_IP_DAILY_QUOTES),
       burstMs: Number(this.env.AI_BURST_MS),
     };
   }
@@ -49,8 +49,12 @@ export class Budget extends DurableObject<Env> {
     return { ok: true };
   }
 
-  /** Called after an LLM call with the usage the model reported. */
-  record(ip: string, usage: Usage): BudgetStatus {
+  /**
+   * Called after every LLM call with the usage the model reported. Spend is per call; the per-IP
+   * quota counts quotes, not calls — an agent loop makes several calls per quote, and a visitor
+   * should be limited by how many deals they run, not by how much the agent thought.
+   */
+  record(ip: string, usage: Usage, opts: { newQuote?: boolean } = {}): BudgetStatus {
     const day = today();
     const micros = costMicros(usage, Number(this.env.AI_PRICE_IN_PER_M), Number(this.env.AI_PRICE_OUT_PER_M));
     this.ctx.storage.transactionSync(() => {
@@ -59,7 +63,7 @@ export class Budget extends DurableObject<Env> {
          ON CONFLICT(day) DO UPDATE SET prompt_tokens=prompt_tokens+excluded.prompt_tokens, completion_tokens=completion_tokens+excluded.completion_tokens, micros=micros+excluded.micros, calls=calls+1`,
         day, usage.prompt_tokens, usage.completion_tokens, micros,
       );
-      this.sql.exec(
+      if (opts.newQuote) this.sql.exec(
         `INSERT INTO ip(day,ip,calls,last_ts) VALUES(?,?,1,?) ON CONFLICT(day,ip) DO UPDATE SET calls=calls+1, last_ts=excluded.last_ts`,
         day, ip, Date.now(),
       );

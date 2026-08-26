@@ -62,7 +62,7 @@ export default {
         if (verdict.ok) {
           const r = await parseDeal(env, message);
           parsed = r.deal;
-          await budget.record(ip, r.usage);
+          await budget.record(ip, r.usage, { newQuote: true });
         } else {
           parsed = parseDeterministic(message); llm = false;
         }

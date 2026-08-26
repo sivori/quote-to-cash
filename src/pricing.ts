@@ -1,6 +1,6 @@
 // Deterministic pricing. Pure functions over the catalog; the LLM never sees this file's inputs
 // until they are already numbers, and never produces a price.
-import { CATALOG, REGION_BPS, TERMS, type Region, type Sku, type Term } from "./catalog";
+import { CATALOG, REGIONS, TERMS, type Currency, type Region, type Sku, type Term } from "./catalog";
 
 export interface QuoteInput {
   lines: { sku: Sku; quantity: number }[];
@@ -13,6 +13,7 @@ export interface QuoteLine {
   label: string;
   quantity: number;
   unit: string;
+  /** Unit price expressed in the quote currency (USD list × price-book FX). */
   unitCents: number;
   /** quantity × unit × months, before region uplift and term discount. */
   baseCents: number;
@@ -21,6 +22,8 @@ export interface QuoteLine {
 export interface Quote {
   lines: QuoteLine[];
   region: Region;
+  /** Currency of every cents figure in this quote. */
+  currency: Currency;
   term: Term;
   months: number;
   subtotalCents: number;
@@ -37,23 +40,24 @@ export function applyBps(cents: number, bps: number): number {
 
 export function price(input: QuoteInput): Quote {
   const term = TERMS[input.term];
+  const region = REGIONS[input.region];
+  // Convert the unit price first, so every line is an exact multiple of a published unit price
+  // in the quote currency and the lines sum to the subtotal without rounding drift.
   const lines: QuoteLine[] = input.lines.map((l) => {
     const item = CATALOG.find((c) => c.sku === l.sku)!;
-    return {
-      sku: l.sku, label: item.label, quantity: l.quantity, unit: item.unit, unitCents: item.unitCents,
-      baseCents: item.unitCents * l.quantity * term.months,
-    };
+    const unitCents = applyBps(item.unitCents, region.fxBps);
+    return { sku: l.sku, label: item.label, quantity: l.quantity, unit: item.unit, unitCents, baseCents: unitCents * l.quantity * term.months };
   });
   const subtotalCents = lines.reduce((s, l) => s + l.baseCents, 0);
-  const withRegion = applyBps(subtotalCents, REGION_BPS[input.region]);
+  const withRegion = applyBps(subtotalCents, region.upliftBps);
   const regionUpliftCents = withRegion - subtotalCents;
   const termDiscountCents = applyBps(withRegion, term.discountBps);
   const totalCents = withRegion - termDiscountCents;
-  return { lines, region: input.region, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, totalCents };
+  return { lines, region: input.region, currency: region.currency, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, totalCents };
 }
 
-export function fmt(cents: number): string {
-  const sign = cents < 0 ? "-" : "";
-  const abs = Math.abs(cents);
-  return `${sign}$${Math.floor(abs / 100).toLocaleString("en-US")}.${String(abs % 100).padStart(2, "0")}`;
+/** Currency-aware formatting: USD as $29,172.00; EUR in European style as 29.172,00 €. */
+export function fmt(cents: number, currency: Currency = "USD"): string {
+  const locale = currency === "EUR" ? "de-DE" : "en-US";
+  return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);
 }

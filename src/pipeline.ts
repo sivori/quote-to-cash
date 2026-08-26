@@ -42,7 +42,7 @@ export class QuoteToCash extends WorkflowEntrypoint<Env, PipelineParams> {
     // 3. Invoice. Exactly one per deal.
     const invoice = await step.do("invoice", async () => {
       const d = await account.issueInvoice(dealId, 30);
-      await account.notify(dealId, "info", "email", `Invoice ${d.invoice!.id} for ${fmt(d.invoice!.amountCents)} issued.`);
+      await account.notify(dealId, "info", "email", `Invoice ${d.invoice!.id} for ${fmt(d.invoice!.amountCents, d.invoice!.currency)} issued.`);
       return d.invoice!;
     });
 
@@ -61,7 +61,7 @@ export class QuoteToCash extends WorkflowEntrypoint<Env, PipelineParams> {
 
       if (result.ok) {
         await step.do("notify-receipt", async () => {
-          await account.notify(dealId, "info", "email", `Payment of ${fmt(result.amountCents)} received (${result.reference}). Thank you.`);
+          await account.notify(dealId, "info", "email", `Payment of ${fmt(result.amountCents, invoice.currency)} received (${result.reference}). Thank you.`);
         });
         return { dealId, outcome: "paid" as const, attempt };
       }
@@ -78,7 +78,7 @@ export class QuoteToCash extends WorkflowEntrypoint<Env, PipelineParams> {
       await step.do(`dunning-${attempt}`, async () => {
         await account.scheduleDunning(dealId, attempt + 1, next.afterDays, next.level);
         const channel = next.level === "final_notice" ? "email+sms+account_manager" : next.level === "warning" ? "email+sms" : "email";
-        await account.notify(dealId, next.level, channel, dunningMessage(next.level, invoice.amountCents, next.afterDays, result.code));
+        await account.notify(dealId, next.level, channel, dunningMessage(next.level, fmt(invoice.amountCents, invoice.currency), next.afterDays, result.code));
       });
       await step.sleep(`wait-${attempt}`, sleepFor(next.afterDays, secondsPerDay));
     }
@@ -86,8 +86,7 @@ export class QuoteToCash extends WorkflowEntrypoint<Env, PipelineParams> {
   }
 }
 
-function dunningMessage(level: string, amountCents: number, days: number, code: string): string {
-  const amt = fmt(amountCents);
+function dunningMessage(level: string, amt: string, days: number, code: string): string {
   switch (level) {
     case "reminder": return `Your payment of ${amt} did not go through (${code}). We'll retry in ${days} day(s); no action needed if your card is current.`;
     case "warning": return `Second attempt to collect ${amt} failed (${code}). Please update your payment method; we'll retry in ${days} day(s).`;

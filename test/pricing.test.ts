@@ -4,21 +4,33 @@ import { validate } from "../src/parse";
 import { charge, sleepFor, DUNNING } from "../src/payments";
 
 describe("pricing", () => {
-  it("prices the canonical deal: 50 Pro seats, 20 TB egress, EU, annual", () => {
+  it("prices the canonical deal in EUR: 50 Pro seats, 20 TB egress, EU, annual", () => {
     const q = price({ lines: [{ sku: "seat_pro", quantity: 50 }, { sku: "egress_tb", quantity: 20 }], region: "EU", term: "annual" });
-    // seats: 50 × $20 × 12 = $12,000; egress: 20 × $80 × 12 = $19,200 → $31,200
+    expect(q.currency).toBe("EUR");
+    // unit prices at the 0.92 price-book rate: €18.40/seat, €73.60/TB
+    expect(q.lines.map((l) => l.unitCents)).toEqual([1_840, 7_360]);
+    // seats: 50 × €18.40 × 12 = €11,040; egress: 20 × €73.60 × 12 = €17,664 → €28,704
+    expect(q.subtotalCents).toBe(2_870_400);
+    // EU +10% = €31,574.40; annual −15% = €4,736.16 → €26,838.24
+    expect(q.regionUpliftCents).toBe(287_040);
+    expect(q.termDiscountCents).toBe(473_616);
+    expect(q.totalCents).toBe(2_683_824);
+  });
+  it("prices US deals in USD, unchanged", () => {
+    const q = price({ lines: [{ sku: "seat_pro", quantity: 50 }, { sku: "egress_tb", quantity: 20 }], region: "US", term: "annual" });
+    expect(q.currency).toBe("USD");
     expect(q.subtotalCents).toBe(3_120_000);
-    // EU +10% = $34,320; annual −15% = $5,148 → $29,172
-    expect(q.regionUpliftCents).toBe(312_000);
-    expect(q.termDiscountCents).toBe(514_800);
-    expect(q.totalCents).toBe(2_917_200);
+    expect(q.totalCents).toBe(2_652_000); // −15%
   });
   it("rounds half-up in integer math", () => {
     expect(applyBps(1, 10_000)).toBe(1);
     expect(applyBps(3, 11_500)).toBe(3); // 3.45 → 3
     expect(applyBps(5, 11_500)).toBe(6); // 5.75 → 6
   });
-  it("formats", () => { expect(fmt(2_917_200)).toBe("$29,172.00"); expect(fmt(5)).toBe("$0.05"); });
+  it("formats per currency", () => {
+    expect(fmt(2_917_200)).toBe("$29,172.00"); expect(fmt(5)).toBe("$0.05");
+    expect(fmt(2_683_824, "EUR")).toBe("26.838,24\u00a0€");
+  });
 });
 
 describe("parse validation", () => {

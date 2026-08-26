@@ -2,15 +2,15 @@
 // writer (core Helvetica fonts, text only) — enough for a statement, and nothing to bundle.
 import type { Deal, Event } from "./account";
 import { fmt } from "./pricing";
-import { TERMS } from "./catalog";
+import { TERMS, type Currency } from "./catalog";
 
 const iso = (ts: number | null | undefined) => (ts ? new Date(ts).toISOString() : "");
 
 export function dealsCsv(customerId: string, deals: Deal[]): string {
-  const cols = ["deal_id", "customer", "created_at", "status", "customer_name", "region", "term", "months", "line_items", "subtotal", "region_uplift", "term_discount", "total", "approval", "approved_by", "invoice_id", "invoice_issued_at", "payment_method", "request"];
+  const cols = ["deal_id", "customer", "created_at", "status", "customer_name", "region", "term", "months", "line_items", "currency", "subtotal", "region_uplift", "term_discount", "total", "approval", "approved_by", "invoice_id", "invoice_issued_at", "payment_method", "request"];
   const rows = deals.map((d) => [
     d.id, customerId, iso(d.createdAt), d.status, d.parsed.customerName ?? "", d.quote.region, d.quote.term, d.quote.months,
-    d.quote.lines.map((l) => `${l.quantity} x ${l.label}`).join("; "),
+    d.quote.lines.map((l) => `${l.quantity} x ${l.label}`).join("; "), d.quote.currency,
     cents(d.quote.subtotalCents), cents(d.quote.regionUpliftCents), cents(-d.quote.termDiscountCents), cents(d.quote.totalCents),
     d.approval?.decision ?? "", d.approval ? (d.approval.auto ? "policy" : d.approval.by) : "",
     d.invoice?.id ?? "", iso(d.invoice?.issuedAt), d.paymentMethod, d.request,
@@ -36,31 +36,32 @@ export function dealsPdf(customerId: string, deals: Deal[], events: Event[]): Ui
   if (!deals.length) doc.text("No deals.", 11);
 
   for (const d of deals) {
+    const $ = (c: number) => fmt(c, d.quote.currency);
     doc.rule();
-    doc.text(`${d.id}   ${fmt(d.quote.totalCents)}   ${STATUS[d.status] ?? d.status}`, 12, true);
+    doc.text(`${d.id}   ${$(d.quote.totalCents)}   ${STATUS[d.status] ?? d.status}`, 12, true);
     doc.text(`"${d.request}"`, 9.5, false, 0.45);
     doc.text(`${d.parsed.customerName ? d.parsed.customerName + " · " : ""}${d.quote.region} · ${TERMS[d.quote.term].label} · ${d.quote.months} month(s) · created ${iso(d.createdAt).slice(0, 16).replace("T", " ")}`, 9.5, false, 0.45);
     doc.gap(2);
-    for (const l of d.quote.lines) doc.cols([`${l.quantity.toLocaleString("en-US")} × ${l.label} @ ${fmt(l.unitCents)}/${l.unit}/mo`, fmt(l.baseCents)], 10);
-    if (d.quote.regionUpliftCents) doc.cols([`${d.quote.region} uplift`, "+" + fmt(d.quote.regionUpliftCents)], 10);
-    if (d.quote.termDiscountCents) doc.cols([`${TERMS[d.quote.term].label}`, "−" + fmt(d.quote.termDiscountCents)], 10);
-    doc.cols(["Total", fmt(d.quote.totalCents)], 11, true);
+    for (const l of d.quote.lines) doc.cols([`${l.quantity.toLocaleString("en-US")} × ${l.label} @ ${$(l.unitCents)}/${l.unit}/mo`, $(l.baseCents)], 10);
+    if (d.quote.regionUpliftCents) doc.cols([`${d.quote.region} uplift`, "+" + $(d.quote.regionUpliftCents)], 10);
+    if (d.quote.termDiscountCents) doc.cols([`${TERMS[d.quote.term].label}`, "−" + $(d.quote.termDiscountCents)], 10);
+    doc.cols(["Total", $(d.quote.totalCents)], 11, true);
     if (d.approval) doc.text(`Approval: ${d.approval.decision} by ${d.approval.auto ? "policy" : d.approval.by} at ${iso(d.approval.at).slice(0, 16).replace("T", " ")}`, 9.5, false, 0.45);
-    if (d.invoice) doc.text(`Invoice ${d.invoice.id} for ${fmt(d.invoice.amountCents)}, issued ${iso(d.invoice.issuedAt).slice(0, 10)}, due ${iso(d.invoice.dueAt).slice(0, 10)}`, 9.5, false, 0.45);
+    if (d.invoice) doc.text(`Invoice ${d.invoice.id} for ${$(d.invoice.amountCents)}, issued ${iso(d.invoice.issuedAt).slice(0, 10)}, due ${iso(d.invoice.dueAt).slice(0, 10)}`, 9.5, false, 0.45);
     const ev = events.filter((e) => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
     const pay = ev.filter((e) => e.kind.startsWith("payment.") || e.kind === "dunning.scheduled" || e.kind === "deal.collections");
-    for (const e of pay) doc.text(`  ${iso(e.ts).slice(11, 19)}  ${e.kind.padEnd(18)}  ${summ(e)}`, 8.5, false, 0.45, true);
+    for (const e of pay) doc.text(`  ${iso(e.ts).slice(11, 19)}  ${e.kind.padEnd(18)}  ${summ(e, d.quote.currency)}`, 8.5, false, 0.45, true);
     doc.gap(6);
   }
   return doc.finish();
 }
 
 const STATUS: Record<string, string> = { pending_approval: "AWAITING APPROVAL", past_due: "PAST DUE", collections: "COLLECTIONS" };
-function summ(e: Event): string {
+function summ(e: Event, currency: Currency): string {
   const d = e.detail as any;
   switch (e.kind) {
     case "payment.attempted": return `attempt ${d.attempt} ${d.reference}`;
-    case "payment.succeeded": return `${fmt(d.amountCents)} on attempt ${d.attempt}`;
+    case "payment.succeeded": return `${fmt(d.amountCents, currency)} on attempt ${d.attempt}`;
     case "payment.failed": return `attempt ${d.attempt}: ${d.code}${d.retryable ? "" : " (not retryable)"}`;
     case "dunning.scheduled": return `retry #${d.nextAttempt} in ${d.afterDays}d (${d.level})`;
     case "deal.collections": return String(d.reason);
@@ -126,7 +127,7 @@ class Pdf {
 
 /** WinAnsi-safe escaping: replace characters outside Latin-1, escape PDF string delimiters. */
 function esc(s: string): string {
-  return s.replace(/[^\x20-\x7e\xa0-\xff]/g, (c) => ({ "—": "-", "–": "-", "×": "x", "−": "-", "·": "-", "→": "->", "’": "'", "“": '"', "”": '"' } as Record<string, string>)[c] ?? "?")
+  return s.replace(/€/g, "\x80").replace(/[^\x20-\x7e\xa0-\xff]/g, (c) => ({ "—": "-", "–": "-", "×": "x", "−": "-", "·": "-", "→": "->", "’": "'", "“": '"', "”": '"' } as Record<string, string>)[c] ?? "?")
     .replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 function bytes(s: string): number { return latin1(s).length; }

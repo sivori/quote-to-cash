@@ -22,7 +22,20 @@ export const CATALOG: CatalogItem[] = [
   { sku: "support_premium", label: "Premium support", unit: "plan", unitCents: 50_000, aliases: ["premium support", "support"] },
 ];
 
-/** Regional uplift, basis points. Data residency and local infrastructure cost more. */
+export type Currency = "USD" | "EUR";
+
+/**
+ * Regions: uplift in basis points (data residency and local infrastructure cost more), the currency
+ * the customer is quoted in, and the price-book FX rate (bps) used to express USD list prices in
+ * that currency. The rate is part of the price book — set by finance, not fetched — so a quote is
+ * reproducible from its inputs.
+ */
+export const REGIONS: Record<Region, { upliftBps: number; currency: Currency; fxBps: number; locale: string }> = {
+  US: { upliftBps: 10_000, currency: "USD", fxBps: 10_000, locale: "en-US" },
+  EU: { upliftBps: 11_000, currency: "EUR", fxBps: 9_200, locale: "de-DE" },
+  APAC: { upliftBps: 11_500, currency: "USD", fxBps: 10_000, locale: "en-US" },
+};
+/** @deprecated kept for the catalog endpoint's shape */
 export const REGION_BPS: Record<Region, number> = { US: 10_000, EU: 11_000, APAC: 11_500 };
 
 /** Term commitment: months billed up front and the discount earned for committing. */

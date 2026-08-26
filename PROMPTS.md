@@ -143,3 +143,12 @@ Added `GET /api/customers/:id/export.csv` (one row per deal, quoted, formula-inj
 `export.pdf` (a statement with line items, approval, invoice and payment events, written by a
 small dependency-free PDF writer), plus an Export button with a download icon and a CSV / PDF
 menu beside Clear history. Tests cover both formats.
+
+**19.**
+
+> For EU quotes, use EU currency formatting.
+
+EU-region deals are now quoted in EUR: the price book carries a per-region currency and FX rate
+(0.92, in basis points) so unit prices convert deterministically before rating, and every amount is
+formatted per currency (`26.838,24 €` vs `$29,172.00`) in the UI, assistant reply, notifications,
+CSV (with a currency column) and PDF (€ mapped to WinAnsi). Tests updated for both currencies.

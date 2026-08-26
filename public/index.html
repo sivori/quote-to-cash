@@ -222,7 +222,7 @@
 const $ = s => document.querySelector(s);
 const cid = () => $('#customer').value.trim() || 'acme';
 const api = (m, path, body) => fetch(`/api/customers/${cid()}${path}`, { method: m, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) }).then(r => r.json());
-const fmt = c => (c < 0 ? '-' : '') + '$' + Math.floor(Math.abs(c) / 100).toLocaleString() + '.' + String(Math.abs(c) % 100).padStart(2, '0');
+const fmt = (c, cur = 'USD') => new Intl.NumberFormat(cur === 'EUR' ? 'de-DE' : 'en-US', { style: 'currency', currency: cur }).format(c / 100);
 const open = new Set(); let cfg = {}; let pmValue = 'card_ok';
 const MARK = {
   visa: `<svg class="cardmark" viewBox="0 0 34 22"><rect width="34" height="22" rx="4" fill="#1A1F71"/><text x="17" y="15" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" font-weight="700" font-style="italic" fill="#fff">VISA</text></svg>`,
@@ -287,23 +287,23 @@ async function refresh() {
     const ev = s.events.filter(e => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
     const st = stepState(d);
     return `<div class="deal ${open.has(d.id) ? 'open' : ''}" id="${d.id}">
-      <button type="button" class="head" aria-expanded="${open.has(d.id)}" aria-controls="${d.id}-body" onclick="toggle('${d.id}')"><span class="id">${d.id}</span><span class="req">${d.request}</span><span class="badge ${d.status}">${LABEL[d.status] ?? d.status}</span><span class="amt">${fmt(d.quote.totalCents)}</span></button>
+      <button type="button" class="head" aria-expanded="${open.has(d.id)}" aria-controls="${d.id}-body" onclick="toggle('${d.id}')"><span class="id">${d.id}</span><span class="req">${d.request}</span><span class="badge ${d.status}">${LABEL[d.status] ?? d.status}</span><span class="amt">${fmt(d.quote.totalCents, d.quote.currency)}</span></button>
       <div class="body" id="${d.id}-body">
         <ol class="stepper">${STEPS.map((n, i) => `<li class="${st[i]}">${n}</li>`).join('')}</ol>
-        ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
-        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e)}</span></li>`).join('')}</ul>
+        ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents, d.quote.currency)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
+        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e, d.quote.currency)}</span></li>`).join('')}</ul>
       </div></div>`;
   }).join('');
 }
-function detail(e) {
-  const d = e.detail;
+function detail(e, cur) {
+  const d = e.detail; const $ = c => fmt(c, d.currency ?? cur);
   switch (e.kind) {
-    case 'quote.priced': return `${fmt(d.totalCents)} · ${d.region} · ${d.term}`;
-    case 'approval.requested': return `${fmt(d.totalCents)} ≥ threshold — waiting for a human`;
+    case 'quote.priced': return `${$(d.totalCents)} · ${d.region} · ${d.term}`;
+    case 'approval.requested': return `${$(d.totalCents)} ≥ threshold — waiting for a human`;
     case 'approval.decided': return `${d.decision} by ${d.by}${d.auto ? ' (policy)' : ''}`;
-    case 'invoice.issued': return `${d.invoiceId} · ${fmt(d.amountCents)}`;
+    case 'invoice.issued': return `${d.invoiceId} · ${$(d.amountCents)}`;
     case 'payment.attempted': return `attempt ${d.attempt} · ${d.reference}`;
-    case 'payment.succeeded': return `${fmt(d.amountCents)} on attempt ${d.attempt}`;
+    case 'payment.succeeded': return `${$(d.amountCents)} on attempt ${d.attempt}`;
     case 'payment.failed': return `attempt ${d.attempt} · ${d.code}${d.retryable ? '' : ' (not retryable)'}`;
     case 'dunning.scheduled': return `retry #${d.nextAttempt} in ${d.afterDays}d (${d.level})`;
     case 'notification.sent': return `[${d.level} · ${d.channel}] ${d.message}`;

@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Quote } from "./pricing";
+import type { Currency } from "./catalog";
 import type { ParsedDeal } from "./parse";
 import type { ChargeResult, PaymentMethod } from "./payments";
 
@@ -22,7 +23,7 @@ export interface Deal {
   status: DealStatus;
   needsApproval: boolean;
   approval: { decision: "approved" | "rejected"; by: string; at: number; auto: boolean } | null;
-  invoice: { id: string; amountCents: number; issuedAt: number; dueAt: number } | null;
+  invoice: { id: string; amountCents: number; currency: Currency; issuedAt: number; dueAt: number } | null;
   workflowId: string | null;
   createdAt: number;
   updatedAt: number;
@@ -63,7 +64,7 @@ export class CustomerAccount extends DurableObject<Env> {
   createDeal(deal: Deal): Deal {
     this.sql.exec("INSERT INTO deals(id,json,status,created_at) VALUES(?,?,?,?)", deal.id, JSON.stringify(deal), deal.status, deal.createdAt);
     this.log(deal.id, "deal.created", { request: deal.request, customerName: deal.parsed.customerName });
-    this.log(deal.id, "quote.priced", { totalCents: deal.quote.totalCents, region: deal.quote.region, term: deal.quote.term });
+    this.log(deal.id, "quote.priced", { totalCents: deal.quote.totalCents, currency: deal.quote.currency, region: deal.quote.region, term: deal.quote.term });
     return deal;
   }
 
@@ -109,7 +110,7 @@ export class CustomerAccount extends DurableObject<Env> {
     const d = this.must(dealId);
     if (d.invoice) return d;
     const now = Date.now();
-    d.invoice = { id: `inv_${dealId}`, amountCents: d.quote.totalCents, issuedAt: now, dueAt: now + dueDays * 86_400_000 };
+    d.invoice = { id: `inv_${dealId}`, amountCents: d.quote.totalCents, currency: d.quote.currency, issuedAt: now, dueAt: now + dueDays * 86_400_000 };
     d.status = "invoiced";
     this.save(d);
     this.log(dealId, "invoice.issued", { invoiceId: d.invoice.id, amountCents: d.invoice.amountCents });

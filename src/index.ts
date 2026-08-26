@@ -3,7 +3,7 @@ import { QuoteToCash, type ApprovalEvent } from "./pipeline";
 import { parseDeal } from "./parse";
 import { price, fmt } from "./pricing";
 import { isPaymentMethod, PAYMENT_METHODS, type PaymentMethod } from "./payments";
-import { CATALOG, REGION_BPS, TERMS } from "./catalog";
+import { CATALOG, REGIONS, TERMS } from "./catalog";
 import { dealsCsv, dealsPdf } from "./export";
 
 export { CustomerAccount, QuoteToCash };
@@ -20,7 +20,7 @@ export { CustomerAccount, QuoteToCash };
 export default {
   async fetch(req, env): Promise<Response> {
     const url = new URL(req.url);
-    if (url.pathname === "/api/catalog") return json({ catalog: CATALOG, regions: REGION_BPS, terms: TERMS, paymentMethods: PAYMENT_METHODS, approvalThresholdCents: Number(env.APPROVAL_THRESHOLD_CENTS), secondsPerDay: Number(env.SECONDS_PER_DAY) });
+    if (url.pathname === "/api/catalog") return json({ catalog: CATALOG, regions: REGIONS, terms: TERMS, paymentMethods: PAYMENT_METHODS, approvalThresholdCents: Number(env.APPROVAL_THRESHOLD_CENTS), secondsPerDay: Number(env.SECONDS_PER_DAY) });
 
     const ex = url.pathname.match(/^\/api\/customers\/([\w-]+)\/export\.(csv|pdf)$/);
     if (ex && req.method === "GET") {
@@ -102,18 +102,20 @@ export default {
 /** The assistant's reply is assembled from priced numbers by code — the model never phrases money. */
 function describe(d: Deal): string {
   const q = d.quote;
-  const lines = q.lines.map((l) => `• ${l.quantity.toLocaleString()} × ${l.label} @ ${fmt(l.unitCents)}/${l.unit}/mo = ${fmt(l.baseCents)}`).join("\n");
+  const $ = (c: number) => fmt(c, q.currency);
+  const lines = q.lines.map((l) => `• ${l.quantity.toLocaleString()} × ${l.label} @ ${$(l.unitCents)}/${l.unit}/mo = ${$(l.baseCents)}`).join("\n");
   const adj = [
-    q.regionUpliftCents ? `${q.region} uplift +${fmt(q.regionUpliftCents)}` : `${q.region} (no uplift)`,
-    q.termDiscountCents ? `${TERMS[q.term].label} −${fmt(q.termDiscountCents)}` : TERMS[q.term].label,
-  ].join(", ");
+    q.regionUpliftCents ? `${q.region} uplift +${$(q.regionUpliftCents)}` : `${q.region} (no uplift)`,
+    q.termDiscountCents ? `${TERMS[q.term].label} −${$(q.termDiscountCents)}` : TERMS[q.term].label,
+    q.currency === "EUR" ? "quoted in EUR at the price-book rate" : "",
+  ].filter(Boolean).join(", ");
   const gate = d.needsApproval ? `This is at or above the approval threshold, so it's waiting for a human to approve.` : `Under the approval threshold — auto-approved by policy; invoicing now.`;
   const warn = d.parsed.unresolved.length ? `\n⚠ ${d.parsed.unresolved.join("; ")}` : "";
   return [
     `**Quote ${d.id}**${d.parsed.customerName ? ` for ${d.parsed.customerName}` : ""} · ${q.months}-month term`,
     lines,
     adj,
-    `**Total: ${fmt(q.totalCents)}**`,
+    `**Total: ${$(q.totalCents)}**`,
     gate + warn,
   ].join("\n\n");
 }

@@ -11,3 +11,14 @@ followed by a short note of what it produced. Nothing is edited or backfilled.
 
 Created the public repo `sivori/quote-to-cash` with this file, then asked clarifying questions
 (LLM choice, payment simulation, approval policy, dunning time scale) before writing any code.
+
+**2.** (answers to the clarifying questions, via the question prompt)
+
+> LLM: Llama 3.3 on Workers AI · Payments: deterministic simulator · Approval: threshold + human · Dunning: configurable, demo-fast by default
+
+Built and deployed the first full vertical slice: catalog + integer pricing, Llama 3.3 parser with
+catalog validation, `CustomerAccount` Durable Object (deals, append-only events, chat), `QuoteToCash`
+Workflow (policy → `waitForEvent` approval → invoice → charge → 1d/3d/7d dunning with escalating
+notices → collections), scripted payment simulator, UI, 7 unit tests, CI. Verified on production:
+a $100 deal auto-approved and paid; a $29,172 deal waited for approval, declined twice, sent a
+reminder and a warning, and collected on attempt 3.

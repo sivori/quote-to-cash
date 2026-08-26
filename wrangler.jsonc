@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quote-to-cash",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS", "directory": "public" },
+  "ai": { "binding": "AI", "remote": true },
+  "vars": {
+    "MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    // Quotes at or above this total (cents) pause for a human; below it the policy auto-approves.
+    "APPROVAL_THRESHOLD_CENTS": "1000000",
+    // Dunning schedule is written in days. This is how many SECONDS one day takes in this deployment.
+    // Production: 86400. Demo: 5, so the whole 1d/3d/7d sequence plays out in under a minute.
+    "SECONDS_PER_DAY": "5"
+  },
+  // One CustomerAccount per customer: deal history, pending approvals, invoices, payments, notifications.
+  "durable_objects": { "bindings": [{ "name": "ACCOUNT", "class_name": "CustomerAccount" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["CustomerAccount"] }],
+  // One QuoteToCash Workflow instance per deal: price → policy → (approval) → invoice → payment → dunning.
+  "workflows": [{ "name": "quote-to-cash", "binding": "PIPELINE", "class_name": "QuoteToCash" }],
+  "observability": { "enabled": true }
+}

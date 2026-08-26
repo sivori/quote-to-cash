@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quote to Cash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --orange:#FF5E1F; --ink:#262626; --ink-2:#1F1F1F; --mute:#707070; --hair:#F0F0F0; --paper:#FDFDFC; --green:#1a7f37; --red:#b52831;
+          --font:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  * { box-sizing:border-box }
+  body { margin:0; background:#fff; color:var(--ink); font:15px/22px var(--font); -webkit-font-smoothing:antialiased;
+         background-image:radial-gradient(rgba(38,38,38,.10) 1px, transparent 1px); background-size:14px 14px }
+  header { background:#fff; border-bottom:1px solid var(--hair); height:56px; display:flex; align-items:center; gap:20px; padding:0 20px }
+  header h1 { font-size:18px; font-weight:500; margin:0; letter-spacing:-.02em } header h1 b { color:var(--orange); font-weight:500 }
+  header label { color:var(--mute); font-size:14px; display:flex; align-items:center; gap:8px }
+  header input, select { color:var(--ink); border:1px solid var(--hair); background:#fff; padding:6px 12px; border-radius:999px; font:inherit; font-size:14px }
+  .hero { max-width:1140px; margin:16px auto 0; background:var(--orange); color:#fff; border-radius:16px; padding:32px; text-align:center }
+  .hero h2 { margin:0 0 8px; font-size:32px; line-height:1; font-weight:500; letter-spacing:-.025em }
+  .hero p { margin:0 auto; max-width:64ch; opacity:.92; font-size:15px }
+  @media (max-width:1180px) { .hero { margin-inline:20px } }
+  main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:20px; max-width:1180px; margin:0 auto }
+  @media (max-width:900px) { main { grid-template-columns:1fr } }
+  section { background:var(--paper); border:1px solid var(--hair); border-radius:16px; padding:18px; min-width:0 }
+  h2 { font-size:14px; font-weight:500; color:var(--mute); margin:0 0 10px }
+  .help { font-size:13.5px; line-height:19px; color:var(--mute); margin:-2px 0 12px }
+  button { background:var(--ink-2); color:#fff; border:1px solid var(--ink-2); padding:8px 16px; border-radius:999px; cursor:pointer; font:inherit; font-size:14px; font-weight:500 }
+  button.ghost { background:#fff; color:var(--ink); border-color:var(--hair) } button.ghost:hover { border-color:#d9d9d9 }
+  button.primary { background:var(--orange); border-color:var(--orange) } button.primary:hover { background:#f0520f }
+  button:disabled { opacity:.45; cursor:not-allowed }
+  #log { height:300px; overflow:auto; display:flex; flex-direction:column; gap:10px; background:#fff; border:1px solid var(--hair); border-radius:12px; padding:12px; margin-bottom:10px }
+  .msg { padding:10px 14px; border-radius:14px; max-width:92%; white-space:pre-wrap; font-size:14px; line-height:20px }
+  .user { background:var(--ink-2); color:#fff; align-self:flex-end; border-bottom-right-radius:4px }
+  .assistant { background:var(--paper); border:1px solid var(--hair); align-self:flex-start; border-bottom-left-radius:4px }
+  form { display:flex; gap:8px } form input { flex:1; background:#fff; border:1px solid var(--hair); padding:10px 16px; border-radius:999px; font:inherit; font-size:14px }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px }
+  .chip { background:#fff; color:var(--ink); border:1px solid var(--hair); border-radius:999px; padding:4px 12px; font-size:13px; font-weight:400 }
+  .chip::before { content:"↗ "; color:var(--mute) } .chip:hover { border-color:var(--orange); color:var(--orange) }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 }
+  .deal { background:#fff; border:1px solid var(--hair); border-radius:12px; margin-bottom:10px; overflow:hidden }
+  .deal .head { display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer }
+  .deal .head .id { font-family:var(--mono); font-size:12.5px } .deal .head .req { color:var(--mute); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .deal .head .amt { font-family:var(--mono); font-size:14px; font-weight:500 }
+  .badge { font-size:12px; line-height:18px; padding:0 8px; border-radius:999px; border:1px solid var(--hair); color:var(--mute); background:var(--paper); white-space:nowrap }
+  .badge.pending_approval { color:var(--orange); border-color:var(--orange); background:#fff }
+  .badge.paid { color:#fff; background:var(--green); border-color:var(--green) }
+  .badge.past_due { color:var(--red); border-color:var(--red); background:#fff }
+  .badge.collections { color:#fff; background:var(--red); border-color:var(--red) }
+  .badge.invoiced, .badge.approved { color:var(--ink); border-color:#d9d9d9 }
+  .deal .body { display:none; border-top:1px solid var(--hair); padding:10px 12px }
+  .deal.open .body { display:block }
+  .stepper { display:grid; grid-template-columns:repeat(5,1fr); list-style:none; padding:0; margin:4px 0 12px; counter-reset:s }
+  .stepper li { position:relative; padding-left:26px; font-size:12px; color:var(--mute); line-height:16px }
+  .stepper li::before { counter-increment:s; content:counter(s); position:absolute; left:0; top:-2px; width:20px; height:20px; border-radius:50%; border:1px solid var(--hair); background:#fff; display:grid; place-items:center; font-size:11px }
+  .stepper li.done::before { background:var(--ink-2); border-color:var(--ink-2); color:#fff; content:"✓" }
+  .stepper li.on::before { border-color:var(--orange); color:var(--orange); box-shadow:0 0 0 3px rgba(255,94,31,.15) }
+  .stepper li.on { color:var(--orange) } .stepper li.fail::before { background:var(--red); border-color:var(--red); color:#fff; content:"!" }
+  .events { list-style:none; margin:0; padding:0; font-size:13px }
+  .events li { display:grid; grid-template-columns:64px 150px 1fr; gap:8px; padding:4px 0; border-top:1px solid var(--hair) }
+  .events .t { font-family:var(--mono); font-size:11.5px; color:var(--mute) } .events .k { font-family:var(--mono); font-size:12px }
+  .events .n { color:var(--ink) } .events li.notif .n { color:var(--ink); background:var(--paper); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
+  .events li.fail .k { color:var(--red) } .events li.ok .k { color:var(--green) }
+  .empty { color:var(--mute); font-size:14px; padding:12px }
+  footer { text-align:center; color:var(--mute); font-size:13px; padding:8px 20px 32px } footer a { color:var(--ink) }
+</style>
+</head>
+<body>
+<header>
+  <h1><b>Quote</b> to Cash</h1>
+  <label>customer <input id="customer" value="acme" style="width:9em"></label>
+  <label>pay with <select id="pm"></select></label>
+  <span id="clock" style="font-size:13px;color:var(--mute)"></span>
+</header>
+<div class="hero">
+  <h2>Type a deal. Watch it get paid.</h2>
+  <p>An LLM turns the sentence into a structured quote. Deterministic code prices it. A Cloudflare Workflow carries it through approval, invoicing, payment and dunning — pausing for a human when the number is big enough.</p>
+</div>
+<main>
+  <section>
+    <h2>1 · Describe the deal</h2>
+    <p class="help">Llama 3.3 on Workers AI extracts products, quantities, region and term into a schema-checked structure. It names things; it never prices them. Anything it can't map is flagged, not guessed.</p>
+    <div class="chips">
+      <button class="chip" onclick="ask(this.textContent)">50 Pro seats, 20 TB egress, EU, annual</button>
+      <button class="chip" onclick="ask(this.textContent)">5 Pro seats monthly in the US</button>
+      <button class="chip" onclick="ask(this.textContent)">200 enterprise seats and premium support, APAC, 3 years, for Globex</button>
+      <button class="chip" onclick="ask(this.textContent)">a dozen widgets</button>
+    </div>
+    <div id="log"></div>
+    <form onsubmit="return send(event)"><input id="q" placeholder="e.g. 50 Pro seats, 20 TB egress, EU, annual" autocomplete="off"><button class="primary">Quote</button></form>
+  </section>
+  <section>
+    <h2>2 · Pipeline &amp; deal history</h2>
+    <p class="help">Each deal is one Workflow instance: policy → <b>approval</b> (a Durable Object holds the pending state while the Workflow waits on <code>waitForEvent</code>) → invoice → payment → dunning with 1d / 3d / 7d backoff and escalating notices. Every step is idempotent, and this customer's Durable Object keeps the full history. Choose a test card in the header to script the payment outcome.</p>
+    <div id="deals"><div class="empty">No deals yet.</div></div>
+  </section>
+</main>
+<footer>Built on <a href="https://developers.cloudflare.com/workers/">Workers</a> · <a href="https://developers.cloudflare.com/workflows/">Workflows</a> · <a href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> · <a href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> &nbsp;|&nbsp; <a href="https://github.com/sivori/quote-to-cash">source</a></footer>
+<script>
+const $ = s => document.querySelector(s);
+const cid = () => $('#customer').value.trim() || 'acme';
+const api = (m, path, body) => fetch(`/api/customers/${cid()}${path}`, { method: m, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) }).then(r => r.json());
+const fmt = c => (c < 0 ? '-' : '') + '$' + Math.floor(Math.abs(c) / 100).toLocaleString() + '.' + String(Math.abs(c) % 100).padStart(2, '0');
+const open = new Set(); let cfg = {};
+fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; $('#pm').innerHTML = c.paymentMethods.map(m => `<option value="${m.id}">${m.label} — ${m.behaviour}</option>`).join(''); $('#clock').textContent = `1 day = ${c.secondsPerDay}s in this demo · approval needed at ${fmt(c.approvalThresholdCents)}+`; });
+
+function add(role, text) { const d = document.createElement('div'); d.className = 'msg ' + role; d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; }
+function ask(t) { $('#q').value = t; $('form').requestSubmit(); }
+async function send(e) {
+  e.preventDefault(); const m = $('#q').value.trim(); if (!m) return false; $('#q').value = ''; add('user', m);
+  const r = await api('POST', '/deals', { message: m, paymentMethod: $('#pm').value });
+  add('assistant', r.reply ?? r.error); if (r.deal) open.add(r.deal.id); refresh(); return false;
+}
+const STEPS = ['Quote', 'Approval', 'Invoice', 'Payment', 'Paid'];
+function stepState(d) {
+  const s = d.status; const st = STEPS.map(() => '');
+  st[0] = 'done';
+  if (s === 'pending_approval') st[1] = 'on';
+  if (['approved','invoiced','paid','past_due','collections'].includes(s)) st[1] = 'done';
+  if (s === 'rejected') st[1] = 'fail';
+  if (s === 'approved') st[2] = 'on';
+  if (['invoiced','paid','past_due','collections'].includes(s)) st[2] = 'done';
+  if (s === 'invoiced') st[3] = 'on'; if (s === 'past_due') st[3] = 'fail'; if (s === 'paid') { st[3] = 'done'; st[4] = 'done'; } if (s === 'collections') st[4] = 'fail';
+  return st;
+}
+const LABEL = { quoted: 'quoted', pending_approval: 'awaiting approval', approved: 'approved', rejected: 'rejected', invoiced: 'invoiced', paid: 'paid', past_due: 'past due — dunning', collections: 'collections' };
+async function refresh() {
+  const s = await api('GET', '');
+  if (!s.deals?.length) { $('#deals').innerHTML = '<div class="empty">No deals yet. Describe one on the left.</div>'; return; }
+  $('#deals').innerHTML = s.deals.map(d => {
+    const ev = s.events.filter(e => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
+    const st = stepState(d);
+    return `<div class="deal ${open.has(d.id) ? 'open' : ''}" id="${d.id}">
+      <div class="head" onclick="toggle('${d.id}')"><span class="id">${d.id}</span><span class="req">${d.request}</span><span class="badge ${d.status}">${LABEL[d.status] ?? d.status}</span><span class="amt">${fmt(d.quote.totalCents)}</span></div>
+      <div class="body">
+        <ol class="stepper">${STEPS.map((n, i) => `<li class="${st[i]}">${n}</li>`).join('')}</ol>
+        ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
+        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString()}</span><span class="k">${e.kind}</span><span class="n">${detail(e)}</span></li>`).join('')}</ul>
+      </div></div>`;
+  }).join('');
+}
+function detail(e) {
+  const d = e.detail;
+  switch (e.kind) {
+    case 'quote.priced': return `${fmt(d.totalCents)} · ${d.region} · ${d.term}`;
+    case 'approval.requested': return `${fmt(d.totalCents)} ≥ threshold — waiting for a human`;
+    case 'approval.decided': return `${d.decision} by ${d.by}${d.auto ? ' (policy)' : ''}`;
+    case 'invoice.issued': return `${d.invoiceId} · ${fmt(d.amountCents)}`;
+    case 'payment.attempted': return `attempt ${d.attempt} · ${d.reference}`;
+    case 'payment.succeeded': return `${fmt(d.amountCents)} on attempt ${d.attempt}`;
+    case 'payment.failed': return `attempt ${d.attempt} · ${d.code}${d.retryable ? '' : ' (not retryable)'}`;
+    case 'dunning.scheduled': return `retry #${d.nextAttempt} in ${d.afterDays}d (${d.level})`;
+    case 'notification.sent': return `[${d.level} · ${d.channel}] ${d.message}`;
+    case 'deal.collections': return d.reason;
+    default: return d.customerName ? `for ${d.customerName}` : '';
+  }
+}
+function toggle(id) { open.has(id) ? open.delete(id) : open.add(id); document.getElementById(id).classList.toggle('open'); }
+async function decide(id, decision) { await api('POST', `/deals/${id}/decision`, { decision, by: 'ui' }); refresh(); }
+$('#customer').onchange = refresh;
+refresh(); setInterval(refresh, 2500);
+</script>
+</body>
+</html>

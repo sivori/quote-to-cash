@@ -42,8 +42,8 @@ export function dealsPdf(customerId: string, deals: Deal[], events: Event[]): Ui
     doc.text(`${d.parsed.customerName ? d.parsed.customerName + " · " : ""}${d.quote.region} · ${TERMS[d.quote.term].label} · ${d.quote.months} month(s) · created ${iso(d.createdAt).slice(0, 16).replace("T", " ")}`, 9.5, false, 0.45);
     doc.gap(2);
     for (const l of d.quote.lines) doc.cols([`${l.quantity.toLocaleString("en-US")} × ${l.label} @ ${fmt(l.unitCents)}/${l.unit}/mo`, fmt(l.baseCents)], 10);
-    doc.cols([`${d.quote.region} uplift`, "+" + fmt(d.quote.regionUpliftCents)], 10);
-    doc.cols([`${TERMS[d.quote.term].label}`, "−" + fmt(d.quote.termDiscountCents)], 10);
+    if (d.quote.regionUpliftCents) doc.cols([`${d.quote.region} uplift`, "+" + fmt(d.quote.regionUpliftCents)], 10);
+    if (d.quote.termDiscountCents) doc.cols([`${TERMS[d.quote.term].label}`, "−" + fmt(d.quote.termDiscountCents)], 10);
     doc.cols(["Total", fmt(d.quote.totalCents)], 11, true);
     if (d.approval) doc.text(`Approval: ${d.approval.decision} by ${d.approval.auto ? "policy" : d.approval.by} at ${iso(d.approval.at).slice(0, 16).replace("T", " ")}`, 9.5, false, 0.45);
     if (d.invoice) doc.text(`Invoice ${d.invoice.id} for ${fmt(d.invoice.amountCents)}, issued ${iso(d.invoice.issuedAt).slice(0, 10)}, due ${iso(d.invoice.dueAt).slice(0, 10)}`, 9.5, false, 0.45);

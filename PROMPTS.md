@@ -89,3 +89,11 @@ The header's contents now sit in the same centred 1180px column as the page head
 > The logo needs to be bigger to be more legible.
 
 Header mark 28 → 44px tall at its natural 1.6:1 aspect (tight crop, no padding), wordmark 16 → 18px, header 56 → 60px.
+
+**12.**
+
+> In the output of the LLM response, ensure there is proper formatting, eg. line breaks, paragraph breaks, padding.
+
+The assistant reply is now emitted as blank-line-separated paragraphs (heading, line-item list,
+adjustments, bold total, approval note) and rendered as real paragraphs and lists with spacing,
+via a tiny escaping renderer — no HTML from the model or the server is trusted.

@@ -94,7 +94,13 @@ function describe(d: Deal): string {
   ].join(", ");
   const gate = d.needsApproval ? `This is at or above the approval threshold, so it's waiting for a human to approve.` : `Under the approval threshold — auto-approved by policy; invoicing now.`;
   const warn = d.parsed.unresolved.length ? `\n⚠ ${d.parsed.unresolved.join("; ")}` : "";
-  return `Quote ${d.id}${d.parsed.customerName ? ` for ${d.parsed.customerName}` : ""} — ${q.months}-month term\n${lines}\n${adj}\nTotal: ${fmt(q.totalCents)}\n${gate}${warn}`;
+  return [
+    `**Quote ${d.id}**${d.parsed.customerName ? ` for ${d.parsed.customerName}` : ""} · ${q.months}-month term`,
+    lines,
+    adj,
+    `**Total: ${fmt(q.totalCents)}**`,
+    gate + warn,
+  ].join("\n\n");
 }
 
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data, null, 2), { status, headers: { "content-type": "application/json" } });

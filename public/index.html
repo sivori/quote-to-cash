@@ -112,7 +112,10 @@
   button:disabled { opacity:.5; cursor:not-allowed }
 
   #log { min-height:220px; max-height:40vh; overflow:auto; display:flex; flex-direction:column; gap:8px; background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:12px; margin-bottom:10px }
-  .msg { padding:8px 12px; border-radius:var(--r); max-width:92%; white-space:pre-wrap; font-size:14px; line-height:21px }
+  .msg { padding:10px 14px; border-radius:var(--r); max-width:92%; font-size:14px; line-height:21px }
+  .msg p { margin:0 } .msg p + p, .msg p + ul, .msg ul + p { margin-top:8px }
+  .msg ul { margin:0; padding-left:18px } .msg li { margin:2px 0 }
+  .msg strong { font-weight:600 } .msg .warn { color:var(--warning-text) }
   .user { background:var(--orange); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; font-weight:500 }
   .assistant { background:var(--elevated); align-self:flex-start; border-bottom-left-radius:4px }
   form { display:flex; gap:8px }
@@ -214,7 +217,19 @@ document.addEventListener('click', e => { if (!$('#pmctl').contains(e.target)) t
 document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePm(false); });
 fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); $('#clock').textContent = `1 day = ${c.secondsPerDay}s in this demo · approval needed at ${fmt(c.approvalThresholdCents)}+`; });
 
-function add(role, text) { const d = document.createElement('div'); d.className = 'msg ' + role; d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; }
+// Minimal, safe rendering of the assistant's plain-text reply: paragraphs on blank lines,
+// "• " lines become a list, **bold** is honoured, everything else is escaped.
+const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function inline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+function render(text) {
+  return text.split(/\n{2,}/).map(block => {
+    const ls = block.split('\n').filter(Boolean);
+    if (ls.length && ls.every(l => l.startsWith('• '))) return '<ul>' + ls.map(l => `<li>${inline(l.slice(2))}</li>`).join('') + '</ul>';
+    const cls = block.startsWith('⚠') ? ' class="warn"' : '';
+    return `<p${cls}>${ls.map(inline).join('<br>')}</p>`;
+  }).join('');
+}
+function add(role, text) { const d = document.createElement('div'); d.className = 'msg ' + role; if (role === 'assistant') d.innerHTML = render(text); else d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; }
 function ask(t) { $('#q').value = t; $('form').requestSubmit(); }
 async function send(e) {
   e.preventDefault(); const m = $('#q').value.trim(); if (!m) return false; $('#q').value = ''; add('user', m);

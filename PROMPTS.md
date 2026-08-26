@@ -111,3 +111,10 @@ caret pinned right, and its menu 380px.
 > The note in the top right is unnecessary. Remove it.
 
 Removed the demo-clock / approval-threshold note from the header.
+
+**15.**
+
+> Shift the "Pay with" dropdown such that it right aligns with the right card.
+
+The Pay-with control is pushed to the right edge of the header's content column, which is the
+same column the right card ends on.

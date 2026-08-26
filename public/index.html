@@ -76,6 +76,7 @@
   .brand img { height:44px; width:auto; display:block }
   header h1 { font-size:18px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em } header h1 b { color:var(--orange); font-weight:600 }
   header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
+  header label.pay { margin-left:auto }
   header input { color:var(--ink); background:var(--base); border:0; box-shadow:0 0 0 1px var(--line); height:36px; padding:0 12px; border-radius:var(--r); font:inherit; font-weight:400 }
   header input::placeholder, form input::placeholder { color:var(--placeholder) }
 
@@ -160,7 +161,7 @@
 <div class="bar">
   <a class="brand" href="/" aria-label="Quote to Cash — home"><img src="/brand/mark-h96.png" alt="" height="44" decoding="async"><h1><b>Quote</b> to Cash</h1></a>
   <label>Customer <input id="customer" value="acme" style="width:9em"></label>
-  <label>Pay with
+  <label class="pay">Pay with
     <span class="pmctl" id="pmctl">
       <button type="button" class="pmbtn" id="pmbtn" aria-haspopup="listbox" aria-expanded="false" onclick="togglePm()"></button>
       <ul class="pmmenu" id="pmmenu" role="listbox" hidden></ul>

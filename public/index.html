@@ -100,6 +100,14 @@
   main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:16px 20px; max-width:1180px; margin:0 auto }
   @media (max-width:900px) { main { grid-template-columns:1fr } }
   section { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:24px; min-width:0 }
+  .sechead { display:flex; align-items:center; justify-content:space-between; gap:12px }
+  .sechead h2 { margin:0 }
+  .sechead + .help { margin-top:4px }
+  button.small { height:28px; padding:0 10px; font-size:13px }
+  .danger { background:var(--danger-strong); color:#fff; box-shadow:0 0 0 1px #c10007 } .danger:hover { background:#c10007 }
+  dialog { border:0; border-radius:var(--r); padding:24px; max-width:420px; width:calc(100% - 40px); background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line), 0 16px 48px rgba(23,23,23,.16) }
+  dialog::backdrop { background:rgba(23,23,23,.4) }
+  dialog h3 { margin:0 0 6px; font-size:16px; line-height:22px; font-weight:600 } dialog p { margin:0; font-size:14px; color:var(--subtle) }
   section h2 { font-size:16px; line-height:22px; font-weight:600; color:var(--ink); margin:0 0 4px }
   section h2::first-letter { color:var(--orange) }
   .help { font-size:13px; line-height:19.5px; color:var(--subtle); margin:0 0 12px }
@@ -187,11 +195,19 @@
     <form onsubmit="return send(event)"><input id="q" placeholder="e.g. 50 Pro seats, 20 TB egress, EU, annual" autocomplete="off" aria-label="Describe the deal"><button class="primary">Quote</button></form>
   </section>
   <section>
-    <h2>2 · Pipeline &amp; deal history</h2>
+    <div class="sechead"><h2>2 · Pipeline &amp; deal history</h2><button type="button" class="ghost small" id="clearBtn" onclick="openClear()">Clear history</button></div>
     <p class="help">One Workflow per deal. Deals of $10,000+ pause for your approval. Pick a test card in the header to script the payment — declines trigger dunning.</p>
     <div id="deals"></div>
   </section>
 </main>
+<dialog id="clearDlg" aria-labelledby="clearTitle">
+  <h3 id="clearTitle">Clear history for <span id="clearWho"></span>?</h3>
+  <p>This deletes every deal, its pipeline events, and the chat for this customer. It can't be undone.</p>
+  <div class="row" style="justify-content:flex-end;margin:16px 0 0">
+    <button type="button" class="ghost" onclick="closeClear()">Cancel</button>
+    <button type="button" class="danger" id="clearGo" onclick="doClear()">Delete everything</button>
+  </div>
+</dialog>
 <footer>Built on <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers/">Workers</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workflows/">Workflows</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> &nbsp;|&nbsp; <a target="_blank" rel="noopener" href="https://github.com/sivori/quote-to-cash">source</a></footer>
 <script>
 const $ = s => document.querySelector(s);
@@ -285,6 +301,13 @@ function detail(e) {
     case 'deal.collections': return d.reason;
     default: return d.customerName ? `for ${d.customerName}` : '';
   }
+}
+function openClear() { $('#clearWho').textContent = cid(); $('#clearDlg').showModal(); $('#clearGo').focus(); }
+function closeClear() { $('#clearDlg').close(); }
+async function doClear() {
+  const go = $('#clearGo'); go.disabled = true;
+  try { await api('DELETE', ''); open.clear(); chatKey = ''; $('#log').innerHTML = ''; await refresh(); }
+  finally { go.disabled = false; closeClear(); }
 }
 function toggle(id) { const on = !open.has(id); on ? open.add(id) : open.delete(id); const el = document.getElementById(id); el.classList.toggle('open', on); el.querySelector('.head').setAttribute('aria-expanded', String(on)); }
 async function decide(id, decision) { await api('POST', `/deals/${id}/decision`, { decision, by: 'ui' }); refresh(); }

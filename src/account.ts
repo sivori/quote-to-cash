@@ -166,6 +166,21 @@ export class CustomerAccount extends DurableObject<Env> {
     return { deals: this.listDeals(), events: this.events(), chat: this.recentChat() };
   }
 
+  /**
+   * Demo reset. Wipes this customer's deals, event log and chat in one transaction. This is the
+   * only destructive path in the object and exists for the demo; a production ledger would archive.
+   * Any Workflow still running for a wiped deal fails on its next step (the deal is gone), which
+   * is the correct outcome.
+   */
+  clearAll(): { deals: number; events: number; chat: number } {
+    return this.ctx.storage.transactionSync(() => {
+      const count = (t: string) => Number(this.sql.exec(`SELECT COUNT(*) AS n FROM ${t}`).toArray()[0].n);
+      const out = { deals: count("deals"), events: count("events"), chat: count("chat") };
+      this.sql.exec("DELETE FROM deals"); this.sql.exec("DELETE FROM events"); this.sql.exec("DELETE FROM chat");
+      return out;
+    });
+  }
+
   private must(id: string): Deal {
     const d = this.getDeal(id);
     if (!d) throw new Error(`no deal ${id}`);

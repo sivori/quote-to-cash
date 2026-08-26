@@ -118,3 +118,11 @@ Removed the demo-clock / approval-threshold note from the header.
 
 The Pay-with control is pushed to the right edge of the header's content column, which is the
 same column the right card ends on.
+
+**16.**
+
+> Provide a clear quotes function with a confirmation dialog. This will remove/delete chat history and deal history.
+
+Added `CustomerAccount.clearAll()` (one transaction over deals, events and chat), `DELETE
+/api/customers/:id`, a "Clear history" button in the pipeline panel, and a native `<dialog>`
+confirmation naming the customer with a destructive-styled "Delete everything" action.

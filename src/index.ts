@@ -13,6 +13,7 @@ export { CustomerAccount, QuoteToCash };
 //   POST /api/customers/:id/deals   { message, paymentMethod? }   parse → price → create → start Workflow
 //   GET  /api/customers/:id/deals/:dealId                deal + its events + Workflow status
 //   POST /api/customers/:id/deals/:dealId/decision { decision, by }   approve / reject
+//   DELETE /api/customers/:id                            wipe deals, events and chat (demo reset)
 
 export default {
   async fetch(req, env): Promise<Response> {
@@ -26,6 +27,7 @@ export default {
 
     try {
       if (req.method === "GET" && !dealId) return json(await account.snapshot());
+      if (req.method === "DELETE" && !dealId) return json({ ok: true, cleared: await account.clearAll() });
 
       if (req.method === "POST" && !dealId && url.pathname.endsWith("/deals")) {
         const body = await req.json<{ message?: string; paymentMethod?: string }>();

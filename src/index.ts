@@ -4,6 +4,7 @@ import { parseDeal } from "./parse";
 import { price, fmt } from "./pricing";
 import { isPaymentMethod, PAYMENT_METHODS, type PaymentMethod } from "./payments";
 import { CATALOG, REGION_BPS, TERMS } from "./catalog";
+import { dealsCsv, dealsPdf } from "./export";
 
 export { CustomerAccount, QuoteToCash };
 
@@ -14,11 +15,23 @@ export { CustomerAccount, QuoteToCash };
 //   GET  /api/customers/:id/deals/:dealId                deal + its events + Workflow status
 //   POST /api/customers/:id/deals/:dealId/decision { decision, by }   approve / reject
 //   DELETE /api/customers/:id                            wipe deals, events and chat (demo reset)
+//   GET  /api/customers/:id/export.csv | export.pdf      deal history as a file
 
 export default {
   async fetch(req, env): Promise<Response> {
     const url = new URL(req.url);
     if (url.pathname === "/api/catalog") return json({ catalog: CATALOG, regions: REGION_BPS, terms: TERMS, paymentMethods: PAYMENT_METHODS, approvalThresholdCents: Number(env.APPROVAL_THRESHOLD_CENTS), secondsPerDay: Number(env.SECONDS_PER_DAY) });
+
+    const ex = url.pathname.match(/^\/api\/customers\/([\w-]+)\/export\.(csv|pdf)$/);
+    if (ex && req.method === "GET") {
+      const account = env.ACCOUNT.get(env.ACCOUNT.idFromName(ex[1]));
+      const stamp = new Date().toISOString().slice(0, 10);
+      if (ex[2] === "csv") {
+        return new Response(dealsCsv(ex[1], await account.listDeals()), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="deals-${ex[1]}-${stamp}.csv"` } });
+      }
+      const [deals, events] = await Promise.all([account.listDeals(), account.events()]);
+      return new Response(dealsPdf(ex[1], deals, events), { headers: { "content-type": "application/pdf", "content-disposition": `attachment; filename="deals-${ex[1]}-${stamp}.pdf"` } });
+    }
 
     const m = url.pathname.match(/^\/api\/customers\/([\w-]+)(?:\/deals(?:\/([\w-]+)(?:\/(decision))?)?)?$/);
     if (!m) return env.ASSETS.fetch(req);

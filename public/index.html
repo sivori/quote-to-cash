@@ -106,6 +106,11 @@
   .sechead h2 { margin:0 }
   .sechead + .help { margin-top:4px }
   button.small { height:28px; padding:0 10px; font-size:13px }
+  button.icon { display:inline-flex; align-items:center; gap:6px }
+  .exmenu { min-width:300px; right:0; left:auto }
+  .exmenu li { display:block; padding:0 }
+  .exmenu a { display:grid; gap:2px; padding:8px 10px; color:var(--ink); text-decoration:none; font-weight:500; border-radius:6px }
+  .exmenu a:hover { background:var(--elevated) } .exmenu a .s { font-weight:400; font-size:13px; color:var(--subtle) }
   .danger { background:var(--danger-strong); color:#fff; box-shadow:0 0 0 1px #c10007 } .danger:hover { background:#c10007 }
   dialog { border:0; border-radius:var(--r); padding:24px; max-width:420px; width:calc(100% - 40px); background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line), 0 16px 48px rgba(23,23,23,.16) }
   dialog::backdrop { background:rgba(23,23,23,.4) }
@@ -199,7 +204,7 @@
     <form onsubmit="return send(event)"><input id="q" placeholder="e.g. 50 Pro seats, 20 TB egress, EU, annual" autocomplete="off" aria-label="Describe the deal"><button class="primary">Quote</button></form>
   </section>
   <section>
-    <div class="sechead"><h2>2 · Pipeline &amp; deal history</h2><button type="button" class="ghost small" id="clearBtn" onclick="openClear()">Clear history</button></div>
+    <div class="sechead"><h2>2 · Pipeline &amp; deal history</h2><span class="row" style="margin:0;gap:6px"><span class="pmctl" id="exctl"><button type="button" class="ghost small icon" id="exportBtn" aria-haspopup="menu" aria-expanded="false" onclick="toggleExport()"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 152v56a16 16 0 0 1-16 16H48a16 16 0 0 1-16-16v-56a8 8 0 0 1 16 0v56h160v-56a8 8 0 0 1 16 0Zm-101.7 5.7a8 8 0 0 0 11.4 0l40-40a8 8 0 0 0-11.4-11.4L136 132.7V40a8 8 0 0 0-16 0v92.7l-26.3-26.4a8 8 0 0 0-11.4 11.4Z"/></svg>Export</button><ul class="pmmenu exmenu" id="exmenu" role="menu" hidden><li role="menuitem"><a id="exCsv" href="#" download>CSV<span class="s">One row per deal — opens in Excel or Sheets</span></a></li><li role="menuitem"><a id="exPdf" href="#" download>PDF<span class="s">Statement with line items, approval, invoice and payments</span></a></li></ul></span><button type="button" class="ghost small" id="clearBtn" onclick="openClear()">Clear history</button></span></div>
     <p class="help">One Workflow per deal. Deals of $10,000+ pause for your approval. Pick a test card in the header to script the payment — declines trigger dunning.</p>
     <div id="deals"></div>
   </section>
@@ -232,8 +237,8 @@ function renderPm() {
 }
 function togglePm(force) { const m = $('#pmmenu'); const show = force ?? m.hidden; m.hidden = !show; $('#pmbtn').setAttribute('aria-expanded', String(show)); }
 function pickPm(id) { pmValue = id; renderPm(); togglePm(false); }
-document.addEventListener('click', e => { if (!$('#pmctl').contains(e.target)) togglePm(false); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePm(false); });
+document.addEventListener('click', e => { if (!$('#pmctl').contains(e.target)) togglePm(false); if (!$('#exctl').contains(e.target)) toggleExport(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { togglePm(false); toggleExport(false); } });
 fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); });
 
 // Minimal, safe rendering of the assistant's plain-text reply: paragraphs on blank lines,
@@ -306,6 +311,7 @@ function detail(e) {
     default: return d.customerName ? `for ${d.customerName}` : '';
   }
 }
+function toggleExport(force) { const m = $('#exmenu'); const show = force ?? m.hidden; if (show) { $('#exCsv').href = `/api/customers/${cid()}/export.csv`; $('#exPdf').href = `/api/customers/${cid()}/export.pdf`; } m.hidden = !show; $('#exportBtn').setAttribute('aria-expanded', String(show)); }
 function openClear() { $('#clearWho').textContent = cid(); $('#clearDlg').showModal(); $('#clearGo').focus(); }
 function closeClear() { $('#clearDlg').close(); }
 async function doClear() {

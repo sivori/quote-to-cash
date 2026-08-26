@@ -149,7 +149,7 @@ export class CustomerAccount extends DurableObject<Env> {
   events(dealId?: string): Event[] {
     const rows = dealId
       ? this.sql.exec("SELECT * FROM events WHERE deal_id=? ORDER BY seq", dealId)
-      : this.sql.exec("SELECT * FROM events ORDER BY seq DESC LIMIT 200");
+      : this.sql.exec("SELECT * FROM events ORDER BY seq");
     return rows.toArray().map((r) => ({ seq: Number(r.seq), dealId: r.deal_id as string, ts: Number(r.ts), kind: r.kind as Event["kind"], detail: JSON.parse(r.detail as string) }));
   }
 

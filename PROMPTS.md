@@ -134,3 +134,12 @@ confirmation naming the customer with a destructive-styled "Delete everything" a
 Header is now brand on the left and a single right-aligned control group (Customer, Pay with) on
 a 24px rhythm, label-to-control gap 10px, menu opening right-aligned under its trigger; wraps
 below 760px.
+
+**18.**
+
+> Provide a deal export function with an export icon. Formats: csv, pdf
+
+Added `GET /api/customers/:id/export.csv` (one row per deal, quoted, formula-injection guarded) and
+`export.pdf` (a statement with line items, approval, invoice and payment events, written by a
+small dependency-free PDF writer), plus an Export button with a download icon and a CSV / PDF
+menu beside Clear history. Tests cover both formats.

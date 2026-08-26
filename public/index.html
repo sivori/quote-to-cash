@@ -4,7 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>Quote to Cash</title>
+<title>Quote to Cash — natural-language deals to paid invoices on Cloudflare</title>
+<meta name="description" content="Type a deal in plain English. An LLM structures it, deterministic code prices it, and a Cloudflare Workflow carries it through approval, invoicing, payment and dunning. Demo built on Workers, Workflows, Durable Objects and Workers AI.">
+<link rel="canonical" href="https://quote-to-cash.csivori.workers.dev/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#FF5E1F">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quote to Cash">
+<meta property="og:title" content="Quote to Cash — natural-language deals to paid invoices on Cloudflare">
+<meta property="og:description" content="Type a deal. Watch it get quoted, approved, invoiced and paid — with dunning on failure. A demo on Cloudflare Workers, Workflows, Durable Objects and Workers AI.">
+<meta property="og:url" content="https://quote-to-cash.csivori.workers.dev/">
+<meta property="og:image" content="https://quote-to-cash.csivori.workers.dev/brand/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Quote to Cash logo: an orange speech bubble overlapping a coin">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Quote to Cash — natural-language deals to paid invoices on Cloudflare">
+<meta name="twitter:description" content="Type a deal. Watch it get quoted, approved, invoiced and paid — with dunning on failure.">
+<meta name="twitter:image" content="https://quote-to-cash.csivori.workers.dev/brand/og.jpg">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Quote to Cash",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": "https://quote-to-cash.csivori.workers.dev/",
+  "image": "https://quote-to-cash.csivori.workers.dev/brand/og.jpg",
+  "description": "A quote-to-cash pipeline demo: natural-language deal to structured quote, approval, invoice, payment and dunning, built on Cloudflare Workers, Workflows, Durable Objects and Workers AI.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Chris Sivori", "url": "https://github.com/sivori" },
+  "codeRepository": "https://github.com/sivori/quote-to-cash"
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -31,6 +68,9 @@
   .num { font-family:var(--mono); font-variant-numeric:tabular-nums }
 
   header { background:var(--base); border-bottom:1px solid var(--hairline); height:56px; display:flex; align-items:center; gap:24px; padding:0 20px }
+  .skip { position:absolute; left:-999px; top:8px; background:var(--base); color:var(--ink); padding:8px 12px; border-radius:var(--r); box-shadow:0 0 0 1px var(--line); z-index:20 } .skip:focus { left:8px }
+  .brand { display:inline-flex; align-items:center; gap:8px; color:inherit; text-decoration:none; border-radius:6px }
+  .brand img { width:28px; height:28px; display:block }
   header h1 { font-size:16px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em } header h1 b { color:var(--orange); font-weight:600 }
   header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
   header input { color:var(--ink); background:var(--base); border:0; box-shadow:0 0 0 1px var(--line); height:36px; padding:0 12px; border-radius:var(--r); font:inherit; font-weight:400 }
@@ -108,8 +148,9 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header>
-  <h1><b>Quote</b> to Cash</h1>
+  <a class="brand" href="/" aria-label="Quote to Cash — home"><img src="/brand/mark.png" alt="" width="28" height="28" decoding="async"><h1><b>Quote</b> to Cash</h1></a>
   <label>Customer <input id="customer" value="acme" style="width:9em"></label>
   <label>Pay with
     <span class="pmctl" id="pmctl">
@@ -123,7 +164,7 @@
   <h2>Type a deal. Watch it get paid.</h2>
   <p>Plain English → quote → approval → invoice → payment → dunning. One sentence in, a paid deal out.</p>
 </div>
-<main>
+<main id="main">
   <section>
     <h2>1 · Describe the deal</h2>
     <p class="help">Llama 3.3 reads the sentence; code does the pricing. Try a chip or type your own.</p>

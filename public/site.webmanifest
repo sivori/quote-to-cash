@@ -1,0 +1,13 @@
+{
+  "name": "Quote to Cash",
+  "short_name": "Quote to Cash",
+  "description": "Type a deal in plain English and watch it get quoted, approved, invoiced and paid on Cloudflare Workers, Workflows, Durable Objects and Workers AI.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#FF5E1F",
+  "icons": [
+    { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

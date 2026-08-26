@@ -58,3 +58,13 @@ Every external link in the footer now has `target="_blank" rel="noopener"`.
 
 Applied every P1/P2/P3 item from the review with orange primaries retained; the review and what
 was done with it are in `docs/ux-review.md`.
+
+**8.**
+
+> I have added logo image to project folder. Include in demo app. Ensure include accessibility, SEO best practices.
+
+Cut the mark from the supplied logo for the header, favicons, apple-touch and PWA icons; built a
+1200×630 Open Graph image from the full logo; added title/description/canonical/robots/theme-color,
+Open Graph and Twitter cards, a web manifest, and SoftwareApplication JSON-LD. Accessibility: the
+mark is decorative (`alt=""`) with the wordmark kept as real text inside a labelled home link,
+plus a skip-to-content link and a `main` landmark. Source image kept at `docs/logo-source.jpeg`.

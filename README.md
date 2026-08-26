@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/mark.png" width="96" height="96" alt="Quote to Cash logo: an orange speech bubble overlapping a coin"></p>
+
 # Quote to Cash
 
 **A quote-to-cash pipeline on Cloudflare's developer platform.** Type a deal in plain English; an LLM structures it, deterministic code prices it, and a Workflow carries it through approval, invoicing, payment and dunning — pausing for a human when the number is big enough.

@@ -121,7 +121,7 @@
   form { display:flex; gap:8px }
   form input { flex:1; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); padding:0 12px; border-radius:var(--r); font:inherit }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px }
-  .chip { height:26px; padding:0 8px; border-radius:6px; background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line); font:500 13px/1 var(--font) }
+  .chip { height:auto; min-height:28px; padding:4px 10px; border-radius:6px; background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line); font:500 13px/18px var(--font); text-align:left; white-space:normal }
   .chip::before { content:"↗ "; color:var(--subtle) } .chip:hover { background:var(--elevated); box-shadow:0 0 0 1px var(--line-strong); color:var(--ink) }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 }
 

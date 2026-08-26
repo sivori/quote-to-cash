@@ -17,6 +17,7 @@ describe("exports", () => {
     expect(head.startsWith("deal_id,customer,")).toBe(true);
     expect(row).toContain('"\'=HYPERLINK(""x"")"');
     expect(row).toContain("11220.00");
+    expect(row).toContain(",-1980.00,"); // negative amounts are numbers, not formulas
   });
   it("writes a parseable PDF", () => {
     const pdf = dealsPdf("acme", [deal], [{ seq: 1, dealId: "deal_1", ts: 1, kind: "payment.succeeded", detail: { attempt: 1, amountCents: 1_122_000 } }]);

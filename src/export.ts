@@ -21,8 +21,8 @@ export function dealsCsv(customerId: string, deals: Deal[]): string {
 const cents = (c: number) => (c / 100).toFixed(2);
 function csvCell(v: unknown): string {
   const s = String(v ?? "");
-  // Guard against spreadsheet formula injection as well as quoting.
-  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  // Guard against spreadsheet formula injection (a plain number such as -5148.00 is not a formula).
+  const safe = /^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s) ? `'${s}` : s;
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 

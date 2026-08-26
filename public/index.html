@@ -109,8 +109,8 @@
   button.icon { display:inline-flex; align-items:center; gap:6px }
   .exmenu { min-width:300px; right:0; left:auto }
   .exmenu li { display:block; padding:0 }
-  .exmenu a { display:grid; gap:2px; padding:8px 10px; color:var(--ink); text-decoration:none; font-weight:500; border-radius:6px }
-  .exmenu a:hover { background:var(--elevated) } .exmenu a .s { font-weight:400; font-size:13px; color:var(--subtle) }
+  .exmenu a { display:grid; grid-template-columns:1fr; gap:2px; padding:8px 10px; color:var(--ink); text-decoration:none; font-weight:500; border-radius:6px }
+  .exmenu a:hover { background:var(--elevated) } .exmenu a .s { display:block; font-weight:400; font-size:13px; color:var(--subtle) }
   .danger { background:var(--danger-strong); color:#fff; box-shadow:0 0 0 1px #c10007 } .danger:hover { background:#c10007 }
   dialog { border:0; border-radius:var(--r); padding:24px; max-width:420px; width:calc(100% - 40px); background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line), 0 16px 48px rgba(23,23,23,.16) }
   dialog::backdrop { background:rgba(23,23,23,.4) }

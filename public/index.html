@@ -222,12 +222,16 @@ fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); $('#c
 const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function inline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
 function render(text) {
-  return text.split(/\n{2,}/).map(block => {
-    const ls = block.split('\n').filter(Boolean);
-    if (ls.length && ls.every(l => l.startsWith('• '))) return '<ul>' + ls.map(l => `<li>${inline(l.slice(2))}</li>`).join('') + '</ul>';
-    const cls = block.startsWith('⚠') ? ' class="warn"' : '';
-    return `<p${cls}>${ls.map(inline).join('<br>')}</p>`;
-  }).join('');
+  // Group consecutive "• " lines into a list and every other line into its own paragraph, so
+  // replies written before paragraph breaks existed still lay out cleanly.
+  const out = []; let list = [];
+  const flush = () => { if (list.length) { out.push('<ul>' + list.map(l => `<li>${inline(l)}</li>`).join('') + '</ul>'); list = []; } };
+  for (const raw of text.split('\n')) {
+    const l = raw.trim(); if (!l) continue;
+    if (l.startsWith('• ')) { list.push(l.slice(2)); continue; }
+    flush(); out.push(`<p${l.startsWith('⚠') ? ' class="warn"' : ''}>${inline(l)}</p>`);
+  }
+  flush(); return out.join('');
 }
 function add(role, text) { const d = document.createElement('div'); d.className = 'msg ' + role; if (role === 'assistant') d.innerHTML = render(text); else d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; }
 function ask(t) { $('#q').value = t; $('form').requestSubmit(); }

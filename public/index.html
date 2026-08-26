@@ -17,7 +17,7 @@
   header label { color:var(--mute); font-size:14px; display:flex; align-items:center; gap:8px }
   header input, select { color:var(--ink); border:1px solid var(--hair); background:#fff; padding:6px 12px; border-radius:999px; font:inherit; font-size:14px }
   .hero { max-width:1140px; margin:16px auto 0; background:var(--orange); color:#fff; border-radius:16px; padding:32px; text-align:center }
-  .hero h2 { margin:0 0 8px; font-size:32px; line-height:1; font-weight:500; letter-spacing:-.025em }
+  .hero h2 { margin:0 0 8px; font-size:32px; line-height:1; font-weight:500; letter-spacing:-.025em; color:#fff }
   .hero p { margin:0 auto; max-width:64ch; opacity:.92; font-size:15px }
   @media (max-width:1180px) { .hero { margin-inline:20px } }
   main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:20px; max-width:1180px; margin:0 auto }
@@ -57,7 +57,7 @@
   .stepper li.on::before { border-color:var(--orange); color:var(--orange); box-shadow:0 0 0 3px rgba(255,94,31,.15) }
   .stepper li.on { color:var(--orange) } .stepper li.fail::before { background:var(--red); border-color:var(--red); color:#fff; content:"!" }
   .events { list-style:none; margin:0; padding:0; font-size:13px }
-  .events li { display:grid; grid-template-columns:64px 150px 1fr; gap:8px; padding:4px 0; border-top:1px solid var(--hair) }
+  .events li { display:grid; grid-template-columns:58px 150px 1fr; gap:8px; padding:4px 0; border-top:1px solid var(--hair) }
   .events .t { font-family:var(--mono); font-size:11.5px; color:var(--mute) } .events .k { font-family:var(--mono); font-size:12px }
   .events .n { color:var(--ink) } .events li.notif .n { color:var(--ink); background:var(--paper); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
   .events li.fail .k { color:var(--red) } .events li.ok .k { color:var(--green) }
@@ -124,8 +124,11 @@ function stepState(d) {
   return st;
 }
 const LABEL = { quoted: 'quoted', pending_approval: 'awaiting approval', approved: 'approved', rejected: 'rejected', invoiced: 'invoiced', paid: 'paid', past_due: 'past due — dunning', collections: 'collections' };
+let chatKey = '';
 async function refresh() {
   const s = await api('GET', '');
+  const key = cid() + ':' + (s.chat?.length ?? 0);
+  if (key !== chatKey) { chatKey = key; $('#log').innerHTML = ''; (s.chat ?? []).forEach(m => add(m.role, m.content)); }
   if (!s.deals?.length) { $('#deals').innerHTML = '<div class="empty">No deals yet. Describe one on the left.</div>'; return; }
   $('#deals').innerHTML = s.deals.map(d => {
     const ev = s.events.filter(e => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
@@ -135,7 +138,7 @@ async function refresh() {
       <div class="body">
         <ol class="stepper">${STEPS.map((n, i) => `<li class="${st[i]}">${n}</li>`).join('')}</ol>
         ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
-        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString()}</span><span class="k">${e.kind}</span><span class="n">${detail(e)}</span></li>`).join('')}</ul>
+        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e)}</span></li>`).join('')}</ul>
       </div></div>`;
   }).join('');
 }

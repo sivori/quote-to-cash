@@ -171,3 +171,12 @@ Every quote and invoice now carries `fxBps` and `priceBookVersion` (a constant b
 price, uplift, discount or rate changes). Shown in the assistant reply for non-USD deals, on the
 `invoice.issued` timeline entry, as `fx_rate` / `price_book` CSV columns, and as a "Rated on price
 book … at FX …" line in the PDF.
+
+**22.**
+
+> Review the readme for review by others. Simplify where possible.
+
+Rewrote the README for someone with five minutes: one-line thesis, live link, screenshot, a short
+"how it works" diagram and service table, a two-minute guided tour, five design decisions (merged
+the old "production-shaped" and "spend guard" sections), run instructions, scope, provenance.
+Removed stale claims (multi-currency is no longer out of scope; the canonical deal is now in EUR).

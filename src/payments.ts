@@ -36,16 +36,6 @@ export function charge(method: PaymentMethod, amountCents: number, attempt: numb
   }
 }
 
-/**
- * Dunning schedule, in days after the failed attempt. Escalation is part of the schedule:
- * each retry is preceded by a notification of increasing severity.
- */
-export const DUNNING: { afterDays: number; level: "reminder" | "warning" | "final_notice" }[] = [
-  { afterDays: 1, level: "reminder" },
-  { afterDays: 3, level: "warning" },
-  { afterDays: 7, level: "final_notice" },
-];
-
 /** Translate a day count into a Workflow sleep string under the deployment's time scale. */
 export function sleepFor(days: number, secondsPerDay: number): `${number} seconds` {
   return `${Math.max(1, Math.round(days * secondsPerDay))} seconds`;

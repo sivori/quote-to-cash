@@ -33,6 +33,9 @@ export interface Quote {
   subtotalCents: number;
   regionUpliftCents: number;
   termDiscountCents: number;
+  /** Negotiated discount granted by the agent within policy, in bps and cents. */
+  agentDiscountBps: number;
+  agentDiscountCents: number;
   totalCents: number;
 }
 
@@ -57,7 +60,14 @@ export function price(input: QuoteInput): Quote {
   const regionUpliftCents = withRegion - subtotalCents;
   const termDiscountCents = applyBps(withRegion, term.discountBps);
   const totalCents = withRegion - termDiscountCents;
-  return { lines, region: input.region, currency: region.currency, fxBps: region.fxBps, priceBookVersion: PRICE_BOOK_VERSION, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, totalCents };
+  return { lines, region: input.region, currency: region.currency, fxBps: region.fxBps, priceBookVersion: PRICE_BOOK_VERSION, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, agentDiscountBps: 0, agentDiscountCents: 0, totalCents };
+}
+
+/** Apply a policy-checked agent discount to the post-term total. Pure; returns a new quote. */
+export function withAgentDiscount(q: Quote, bps: number): Quote {
+  const base = q.subtotalCents + q.regionUpliftCents - q.termDiscountCents;
+  const agentDiscountCents = applyBps(base, bps);
+  return { ...q, agentDiscountBps: bps, agentDiscountCents, totalCents: base - agentDiscountCents };
 }
 
 /** Currency-aware formatting: USD as $29,172.00; EUR in European style as 29.172,00 €. */

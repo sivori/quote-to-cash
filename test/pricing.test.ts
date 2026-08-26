@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { price, applyBps, fmt } from "../src/pricing";
 import { validate } from "../src/parse";
-import { charge, sleepFor, DUNNING } from "../src/payments";
+import { charge, sleepFor } from "../src/payments";
+import { DUNNING_STRATEGIES } from "../src/policy";
 
 describe("pricing", () => {
   it("prices the canonical deal in EUR: 50 Pro seats, 20 TB egress, EU, annual", () => {
@@ -55,7 +56,7 @@ describe("payments + dunning", () => {
     expect(charge("card_decline", 100, 9, "d")).toMatchObject({ ok: false, retryable: false, code: "do_not_honor" });
   });
   it("scales the dunning schedule to the deployment's clock", () => {
-    expect(DUNNING.map((d) => d.afterDays)).toEqual([1, 3, 7]);
+    expect(DUNNING_STRATEGIES.standard.steps.map((d) => d.afterDays)).toEqual([1, 3, 7]);
     expect(sleepFor(3, 86_400)).toBe("259200 seconds");
     expect(sleepFor(3, 5)).toBe("15 seconds");
   });

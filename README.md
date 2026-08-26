@@ -2,7 +2,7 @@
 
 # Quote to Cash
 
-**Type a deal in plain English. Watch it get quoted, approved, invoiced, and paid — on Cloudflare.**
+**Type a deal in plain English. An agent plans it inside hard policy limits; Cloudflare Workflows carry it to paid.**
 
 [![CI](https://github.com/sivori/quote-to-cash/actions/workflows/ci.yml/badge.svg)](https://github.com/sivori/quote-to-cash/actions/workflows/ci.yml) &nbsp; **Live demo → [quote-to-cash.csivori.workers.dev](https://quote-to-cash.csivori.workers.dev)**
 
@@ -11,28 +11,30 @@
 ## How it works
 
 ```
-"50 Pro seats, 20 TB egress, EU, annual"
+"200 enterprise seats, APAC, 3 years, for Globex"
         │
-        ▼  Llama 3.3 (Workers AI) extracts products, quantities, region, term — never prices
-        ▼  price() rates it from the catalog in integer cents           →  26.838,24 €
-        ▼  CustomerAccount (Durable Object) records the deal
-        ▼  QuoteToCash (Workflow, one per deal)
-           policy ─▶ approval (pauses for a human ≥ $10k) ─▶ invoice ─▶ charge ─▶ paid
-                                                                          │ declined
-                                     reminder · 1d · retry · warning · 3d · retry · final notice · 7d · retry · collections
+        ▼  parse      Llama 3.3 extracts products, quantities, region, term — never prices
+        ▼  agent      Llama 3.3 runs a tool loop:  lookup_pricing → apply_discount → request_approval → choose_dunning_strategy → finalize
+                      every tool is code behind a guardrail (policy.ts): it can ask, it cannot decide
+        ▼  plan       quote in integer cents · discount (if policy allows) · approval? · dunning strategy · rationale · full tool trace
+        ▼  CustomerAccount (Durable Object) records the deal and every tool call
+        ▼  QuoteToCash (Workflow) — durable waits and scheduled retries only
+           waitForEvent(approval) ─▶ invoice ─▶ charge ─▶ paid
+                                                  │ declined
+                                      notice · sleep · retry · notice · sleep · retry · … · collections   (schedule the agent chose)
 ```
 
 | Cloudflare service | Used for |
 |---|---|
-| [Workers AI](https://developers.cloudflare.com/workers-ai/) | Llama 3.3 with JSON-schema output, parsing the sentence into a structured deal |
-| [Workflows](https://developers.cloudflare.com/workflows/) | The pipeline: durable steps, `waitForEvent` for approval, `sleep` for dunning backoff |
+| [Workers AI](https://developers.cloudflare.com/workers-ai/) | Llama 3.3: JSON-schema parsing, then a function-calling agent loop over the deal tools |
+| [Workflows](https://developers.cloudflare.com/workflows/) | Durable execution of the plan: `waitForEvent` for approval, `sleep` for dunning backoff, idempotent steps |
 | [Durable Objects](https://developers.cloudflare.com/durable-objects/) | Per-customer deal history, event log and chat memory; a singleton spend guard |
 | [Workers](https://developers.cloudflare.com/workers/) + Static Assets | API and the UI |
 
 ## Try it in two minutes
 
 1. Open the [demo](https://quote-to-cash.csivori.workers.dev) and click the chip **5 Pro seats monthly in the US**. It's under the approval threshold, so it auto-approves, invoices, and pays — expand the deal to see each step.
-2. In the header, switch **Pay with** to *Mastercard ···0341* (declines twice), then click **50 Pro seats, 20 TB egress, EU, annual**. It's €26,838 — over the threshold — so the Workflow pauses. Click **Approve**. Watch the decline, the reminder, the retry, the warning, and the payment on attempt 3. Dunning days run at 5 s each in the demo.
+2. In the header, switch **Pay with** to *Mastercard ···0341* (declines twice), then click **200 enterprise seats and premium support, APAC, 3 years, for Globex**. Expand the deal: the agent's tool calls are in the timeline — it priced the deal, proposed a small multi-year discount (policy checked it), chose *gentle* dunning for a strategic account, and the $372k total forced human approval. Click **Approve**. Watch the decline, the notice, the retry, and the payment on attempt 3. Dunning days run at 5 s each in the demo.
 3. Click **Export** for the deal history as CSV or PDF.
 
 | Test card | Behaviour |
@@ -44,17 +46,18 @@
 
 ## Design decisions
 
+- **The agent proposes; policy decides.** The LLM's only powers are five tools ([`agent.ts`](src/agent.ts)). Each runs through [`policy.ts`](src/policy.ts) first: discounts need a reason and a discountable term, up to 10% alone, 10–25% only with a human, never more; approval can be escalated but never waived — deals at or above the threshold always wait; dunning is an id from an allowlist, never a schedule the model wrote. The loop is bounded (6 tool calls), tool arguments are coerced and validated, and a malformed or exhausted loop falls back to the plan policy alone would make. Every tool call and refusal is recorded on the deal.
 - **The model names things; code prices them.** Llama 3.3 returns SKUs, quantities, region and term into a schema. `validate()` maps them onto the catalog and *reports* anything it can't, rather than guessing. Every amount, message, and policy decision comes from code. ([`parse.ts`](src/parse.ts), [`pricing.ts`](src/pricing.ts), [`catalog.ts`](src/catalog.ts))
 - **Money is integers.** Cents, basis points, round-half-up. EU deals are priced in EUR at a price-book FX rate, and every quote and invoice is stamped with that rate and the price-book version, so an invoice still explains itself after the book changes.
-- **Idempotent everywhere.** Workflow instance id = deal id, so a resubmitted deal resumes rather than duplicates. Exactly one invoice and one decision per deal, enforced in the Durable Object. The event log is append-only. ([`account.ts`](src/account.ts), [`pipeline.ts`](src/pipeline.ts))
-- **Dunning reads the processor's word.** `card_declined` retries on a 1d / 3d / 7d schedule with escalating notices; `do_not_honor` goes straight to collections. Days are a deployment setting (`SECONDS_PER_DAY`), so the same code runs in seconds here and in days in production. ([`payments.ts`](src/payments.ts))
+- **Workflows do the durable part only.** The Workflow makes no decisions: it waits on `waitForEvent` when the plan says a human must approve, issues the one invoice, charges, and `sleep`s between retries on the schedule the agent chose. Instance id = deal id, so a resubmitted deal resumes rather than duplicates; one invoice and one decision per deal are enforced in the Durable Object; the event log is append-only. ([`pipeline.ts`](src/pipeline.ts), [`account.ts`](src/account.ts))
+- **Dunning reads the processor's word.** `card_declined` retries with escalating notices on the strategy the agent picked (standard 1/3/7d, gentle 3/7/14d, aggressive 1/2/4d); `do_not_honor` goes straight to collections. Days are a deployment setting (`SECONDS_PER_DAY`), so the same code runs in seconds here and in days in production. ([`payments.ts`](src/payments.ts), [`policy.ts`](src/policy.ts))
 - **A public demo needs a spend guard.** A singleton `Budget` Durable Object meters every LLM call from the model's reported usage at Workers AI's [published rates](https://developers.cloudflare.com/workers-ai/platform/pricing/): $5 per day overall, 40 quotes per IP, one per second. Past the cap a keyword parser takes over and the reply says so; the footer shows today's spend. ([`budget.ts`](src/budget.ts))
 
 ## Run it
 
 ```bash
 npm install
-npm test          # pricing, parser validation, payments, dunning clock, exports, budget
+npm test          # pricing, guardrails, parser validation, payments, dunning clock, exports, budget
 npm run dev       # http://localhost:8787 — Workers AI runs remotely even in dev (wrangler login)
 scripts/demo.sh   # two deals end to end against the dev server
 npm run deploy

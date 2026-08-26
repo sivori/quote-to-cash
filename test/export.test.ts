@@ -6,7 +6,7 @@ const deal: any = {
   id: "deal_1", customerId: "acme", request: 'Quote for "Acme", 50 Pro seats', createdAt: 1_700_000_000_000, status: "paid",
   parsed: { customerName: "Acme", lines: [], region: "EU", term: "annual", paymentMethod: null, unresolved: [], notes: null },
   quote: price({ lines: [{ sku: "seat_pro", quantity: 50 }], region: "EU", term: "annual" }), paymentMethod: "card_ok",
-  needsApproval: true, approval: { decision: "approved", by: "chris", at: 1_700_000_100_000, auto: false },
+  needsApproval: true, plan: { discountReason: null, needsApproval: true, approvalReason: "x", dunning: "standard", dunningReason: null, rationale: "", trace: [], llm: false }, approval: { decision: "approved", by: "chris", at: 1_700_000_100_000, auto: false },
   invoice: { id: "inv_deal_1", amountCents: 1_032_240, currency: "EUR", fxBps: 9_200, priceBookVersion: "2026-08-v1", issuedAt: 1_700_000_200_000, dueAt: 1_702_592_200_000 }, workflowId: "deal_1", updatedAt: 0,
 };
 

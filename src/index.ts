@@ -2,7 +2,9 @@ import { CustomerAccount, type Deal } from "./account";
 import { QuoteToCash, type ApprovalEvent } from "./pipeline";
 import { parseDeal, parseDeterministic, type ParsedDeal } from "./parse";
 import { Budget } from "./budget";
-import { price, fmt, fxLabel } from "./pricing";
+import { fmt, fxLabel } from "./pricing";
+import { planDeal, planDeterministic } from "./agent";
+import { DUNNING_STRATEGIES } from "./policy";
 import { isPaymentMethod, PAYMENT_METHODS, type PaymentMethod } from "./payments";
 import { CATALOG, REGIONS, TERMS } from "./catalog";
 import { dealsCsv, dealsPdf } from "./export";
@@ -64,6 +66,7 @@ export default {
         } else {
           parsed = parseDeterministic(message); llm = false;
         }
+        const threshold = Number(env.APPROVAL_THRESHOLD_CENTS);
         await account.appendChat("user", message);
         if (!parsed.lines.length) {
           const reply = `I couldn't find any products in that. ${parsed.unresolved.join("; ") || ""} Try e.g. "50 Pro seats, 20 TB egress, EU, annual".` + (llm ? "" : "\n\n_Parsed without the LLM — today's AI budget is used up._");
@@ -72,12 +75,16 @@ export default {
         }
         const paymentMethod: PaymentMethod = isPaymentMethod(body.paymentMethod) ? body.paymentMethod
           : isPaymentMethod(parsed.paymentMethod) ? parsed.paymentMethod : "card_ok";
-        const quote = price(parsed);
+        // The agent decides discount, escalation and dunning — inside policy. Budget-metered per turn.
+        const plan = llm
+          ? await planDeal(env, parsed, message, (u) => budget.record(ip, u))
+          : planDeterministic(parsed, threshold);
+        const { quote, ...rest } = plan;
         const id = `deal_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
         const now = Date.now();
         const deal: Deal = {
           id, customerId, request: message, parsed, quote, paymentMethod, status: "quoted",
-          needsApproval: quote.totalCents >= Number(env.APPROVAL_THRESHOLD_CENTS),
+          needsApproval: plan.needsApproval, plan: rest,
           approval: null, invoice: null, workflowId: null, createdAt: now, updatedAt: now,
         };
         await account.createDeal(deal);
@@ -125,14 +132,17 @@ function describe(d: Deal): string {
     q.termDiscountCents ? `${TERMS[q.term].label} −${$(q.termDiscountCents)}` : TERMS[q.term].label,
     q.currency !== "USD" ? `FX ${fxLabel(q.fxBps, q.currency)} (price book ${q.priceBookVersion})` : "",
   ].filter(Boolean).join(", ");
-  const gate = d.needsApproval ? `This is at or above the approval threshold, so it's waiting for a human to approve.` : `Under the approval threshold — auto-approved by policy; invoicing now.`;
+  const disc = q.agentDiscountBps ? `Negotiated discount ${q.agentDiscountBps / 100}% −${$(q.agentDiscountCents)}${d.plan.discountReason ? ` — ${d.plan.discountReason}` : ""}` : "";
+  const gate = d.needsApproval ? `Waiting for a human to approve: ${d.plan.approvalReason ?? "policy"}.` : `Auto-approved by policy; invoicing now.`;
+  const dun = `Dunning: ${DUNNING_STRATEGIES[d.plan.dunning].label.toLowerCase()}${d.plan.dunningReason ? ` — ${d.plan.dunningReason}` : ""}.`;
   const warn = d.parsed.unresolved.length ? `\n⚠ ${d.parsed.unresolved.join("; ")}` : "";
   return [
     `**Quote ${d.id}**${d.parsed.customerName ? ` for ${d.parsed.customerName}` : ""} · ${q.months}-month term`,
     lines,
-    adj,
+    [adj, disc].filter(Boolean).join("\n"),
     `**Total: ${$(q.totalCents)}**`,
-    gate + warn,
+    `_Agent: ${d.plan.rationale}_`,
+    `${gate} ${dun}${warn}`,
   ].join("\n\n");
 }
 

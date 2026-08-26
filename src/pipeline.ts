@@ -1,10 +1,12 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from "cloudflare:workers";
-import { charge, DUNNING, sleepFor } from "./payments";
+import { charge, sleepFor } from "./payments";
+import { DUNNING_STRATEGIES } from "./policy";
 import { fmt } from "./pricing";
 
-// Quote → approval → invoice → payment → dunning. One instance per deal (instance id = deal id),
-// so a re-submitted deal resumes rather than duplicates. Every step is idempotent against the
-// CustomerAccount, so a retried step cannot double-invoice or double-charge.
+// Executes the agent's plan durably. The Workflow makes no decisions: it waits for the human
+// when the plan says so, issues the invoice, charges, and sleeps between retries on the
+// schedule the plan chose. One instance per deal (instance id = deal id), so a re-submitted deal
+// resumes rather than duplicates; every step is idempotent against the CustomerAccount.
 
 export interface PipelineParams { customerId: string; dealId: string }
 export interface ApprovalEvent { decision: "approved" | "rejected"; by: string }
@@ -13,18 +15,18 @@ export class QuoteToCash extends WorkflowEntrypoint<Env, PipelineParams> {
   async run(event: WorkflowEvent<PipelineParams>, step: WorkflowStep) {
     const { customerId, dealId } = event.payload;
     const account = this.env.ACCOUNT.get(this.env.ACCOUNT.idFromName(customerId));
-    const threshold = Number(this.env.APPROVAL_THRESHOLD_CENTS);
     const secondsPerDay = Number(this.env.SECONDS_PER_DAY);
 
-    // 1. Policy: small deals auto-approve; large ones wait for a person.
+    // 1. Record the plan's approval decision. (The decision was made by policy + agent up front.)
     const policy = await step.do("policy", async () => {
       const deal = await account.getDeal(dealId);
       if (!deal) throw new Error(`deal ${dealId} not found`);
-      const needsHuman = deal.quote.totalCents >= threshold;
+      const needsHuman = deal.plan.needsApproval;
       if (!needsHuman) await account.decide(dealId, "approved", "policy", true);
       else await account.requestApproval(dealId);
-      return { needsHuman, totalCents: deal.quote.totalCents };
+      return { needsHuman, totalCents: deal.quote.totalCents, dunning: deal.plan.dunning as string };
     });
+    const DUNNING = (DUNNING_STRATEGIES as Record<string, { steps: { afterDays: number; level: "reminder" | "warning" | "final_notice" }[] }>)[policy.dunning]?.steps ?? DUNNING_STRATEGIES.standard.steps;
 
     // 2. Approval gate. The Durable Object holds pending state; the Workflow sleeps on the event.
     if (policy.needsHuman) {

@@ -180,3 +180,17 @@ Rewrote the README for someone with five minutes: one-line thesis, live link, sc
 "how it works" diagram and service table, a two-minute guided tour, five design decisions (merged
 the old "production-shaped" and "spend guard" sections), run instructions, scope, provenance.
 Removed stale claims (multi-currency is no longer out of scope; the canonical deal is now in EUR).
+
+**23.**
+
+> Now that we have the basic concept, replace the linear pipeline with a tool-using agent loop: the LLM decides which actions to take (pricing lookup, discounting, approval escalation, dunning strategy) with hard guardrails in code, using Workflows only for durable waits and scheduled retries.
+
+Added `policy.ts` (discount authority and ceiling, discountable terms, approval-never-waived,
+allowlisted dunning strategies, attempt bounds, loop bound) and `agent.ts` (Llama 3.3
+function-calling loop over five tools — `lookup_pricing`, `apply_discount`, `request_approval`,
+`choose_dunning_strategy`, `finalize` — each guarded by policy; deterministic fallback plan).
+The Workflow now only executes the plan: `waitForEvent` for approval, invoice, charge, `sleep`
+between retries on the chosen strategy. The deal records the plan and every tool call; the UI
+timeline shows them and the reply carries the agent's rationale. Two production fixes on the way:
+Workers AI requires OpenAI-shaped tool messages (`tool_calls[].function`, `tool_call_id`), and the
+discount tool takes a percent rather than basis points after the model sent `"10"` meaning 10%.

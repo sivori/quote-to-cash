@@ -3,6 +3,7 @@ import type { Quote } from "./pricing";
 import type { Currency } from "./catalog";
 import type { ParsedDeal } from "./parse";
 import type { ChargeResult, PaymentMethod } from "./payments";
+import type { Plan } from "./agent";
 
 // One CustomerAccount per customer. It is the system of record for every deal the customer has
 // had: the parsed request, the priced quote, the approval decision, the invoice, every payment
@@ -22,6 +23,8 @@ export interface Deal {
   paymentMethod: PaymentMethod;
   status: DealStatus;
   needsApproval: boolean;
+  /** What the agent decided (and every tool call it made), minus the quote which lives above. */
+  plan: Omit<Plan, "quote">;
   approval: { decision: "approved" | "rejected"; by: string; at: number; auto: boolean } | null;
   invoice: { id: string; amountCents: number; currency: Currency; fxBps: number; priceBookVersion: string; issuedAt: number; dueAt: number } | null;
   workflowId: string | null;
@@ -33,7 +36,7 @@ export interface Event {
   seq: number;
   dealId: string;
   ts: number;
-  kind: "deal.created" | "quote.priced" | "approval.requested" | "approval.decided" | "invoice.issued"
+  kind: "deal.created" | "quote.priced" | "agent.tool" | "agent.plan" | "approval.requested" | "approval.decided" | "invoice.issued"
       | "payment.attempted" | "payment.succeeded" | "payment.failed" | "dunning.scheduled"
       | "notification.sent" | "deal.collections";
   detail: Record<string, unknown>;
@@ -65,6 +68,8 @@ export class CustomerAccount extends DurableObject<Env> {
     this.sql.exec("INSERT INTO deals(id,json,status,created_at) VALUES(?,?,?,?)", deal.id, JSON.stringify(deal), deal.status, deal.createdAt);
     this.log(deal.id, "deal.created", { request: deal.request, customerName: deal.parsed.customerName });
     this.log(deal.id, "quote.priced", { totalCents: deal.quote.totalCents, currency: deal.quote.currency, region: deal.quote.region, term: deal.quote.term });
+    for (const t of deal.plan.trace) this.log(deal.id, "agent.tool", { tool: t.tool, args: JSON.parse(t.args), ok: t.ok, result: JSON.parse(t.result) });
+    this.log(deal.id, "agent.plan", { llm: deal.plan.llm, discountBps: deal.quote.agentDiscountBps, discountReason: deal.plan.discountReason, needsApproval: deal.plan.needsApproval, approvalReason: deal.plan.approvalReason, dunning: deal.plan.dunning, dunningReason: deal.plan.dunningReason, rationale: deal.plan.rationale });
     return deal;
   }
 

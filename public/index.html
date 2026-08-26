@@ -165,6 +165,7 @@
   .events .t { font-family:var(--mono); font-size:12px; line-height:16px; color:var(--subtle); padding-top:2px } .events .k { font-family:var(--mono); font-size:13px }
   .events li.notif .n { background:var(--warning-tint); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
   .events li.fail .k { color:var(--danger-text) } .events li.ok .k { color:var(--success-text) }
+  .events li.agent .k { color:var(--info) } .events li.refused .n { color:var(--danger-text) }
   .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:40px 24px; text-align:center }
   .empty b { display:block; font-size:14px; font-weight:600; margin-bottom:2px } .empty span { font-size:13px; color:var(--subtle) }
   .meter { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--subtle); margin-bottom:8px }
@@ -196,7 +197,7 @@
 <main id="main">
   <section>
     <h2>1 · Describe the deal</h2>
-    <p class="help">Llama 3.3 reads the sentence; code does the pricing. Try a chip or type your own.</p>
+    <p class="help">Llama 3.3 reads the sentence, then plans the deal with tools. Code prices it and enforces the limits. Try a chip or type your own.</p>
     <div class="chips">
       <button class="chip" onclick="ask(this.textContent)">50 Pro seats, 20 TB egress, EU, annual</button>
       <button class="chip" onclick="ask(this.textContent)">5 Pro seats monthly in the US</button>
@@ -208,7 +209,7 @@
   </section>
   <section>
     <div class="sechead"><h2>2 · Pipeline &amp; deal history</h2><span class="row" style="margin:0;gap:6px"><span class="pmctl" id="exctl"><button type="button" class="ghost small icon" id="exportBtn" aria-haspopup="menu" aria-expanded="false" onclick="toggleExport()"><svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224 152v56a16 16 0 0 1-16 16H48a16 16 0 0 1-16-16v-56a8 8 0 0 1 16 0v56h160v-56a8 8 0 0 1 16 0Zm-101.7 5.7a8 8 0 0 0 11.4 0l40-40a8 8 0 0 0-11.4-11.4L136 132.7V40a8 8 0 0 0-16 0v92.7l-26.3-26.4a8 8 0 0 0-11.4 11.4Z"/></svg>Export</button><ul class="pmmenu exmenu" id="exmenu" role="menu" hidden><li role="menuitem"><a id="exCsv" href="#" download>CSV<span class="s">One row per deal — opens in Excel or Sheets</span></a></li><li role="menuitem"><a id="exPdf" href="#" download>PDF<span class="s">Statement with line items, approval, invoice and payments</span></a></li></ul></span><button type="button" class="ghost small" id="clearBtn" onclick="openClear()">Clear history</button></span></div>
-    <p class="help">One Workflow per deal. Deals of $10,000+ pause for your approval. Pick a test card in the header to script the payment — declines trigger dunning.</p>
+    <p class="help">An agent decides each deal — discount, escalation, dunning strategy — inside hard policy limits; a Workflow then waits, invoices, charges and retries. Deals of $10,000+ always pause for your approval. Pick a test card in the header to script the payment.</p>
     <div id="deals"></div>
   </section>
 </main>
@@ -294,14 +295,22 @@ async function refresh() {
       <div class="body" id="${d.id}-body">
         <ol class="stepper">${STEPS.map((n, i) => `<li class="${st[i]}">${n}</li>`).join('')}</ol>
         ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents, d.quote.currency)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
-        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e, d.quote.currency)}</span></li>`).join('')}</ul>
+        <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : e.kind.startsWith('agent.') ? (e.detail.ok === false ? 'agent refused' : 'agent') : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e, d.quote.currency)}</span></li>`).join('')}</ul>
       </div></div>`;
   }).join('');
+}
+function summarize(r) {
+  if (r == null) return 'ok'; if (typeof r !== 'object') return String(r);
+  if (r.total) return `total ${r.total}${r.needsApprovalByPolicy ? ' (≥ threshold)' : ''}`;
+  if (r.applied) return `${r.applied} off → ${r.newTotal}${r.requiresHumanApproval ? ' (needs approval)' : ''}`;
+  if (r.strategy) return r.strategy; if (r.escalated) return 'escalated'; return 'ok';
 }
 function detail(e, cur) {
   const d = e.detail; const $ = c => fmt(c, d.currency ?? cur);
   switch (e.kind) {
     case 'quote.priced': return `${$(d.totalCents)} · ${d.region} · ${d.term}`;
+    case 'agent.tool': return `${d.tool}(${Object.entries(d.args ?? {}).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')}) → ${d.ok ? summarize(d.result) : '✗ ' + (d.result?.error ?? 'refused')}`;
+    case 'agent.plan': return `${d.llm ? 'LLM' : 'policy fallback'} · ${d.discountBps ? `discount ${d.discountBps / 100}%` : 'no discount'} · ${d.needsApproval ? 'escalate: ' + d.approvalReason : 'auto-approve'} · dunning ${d.dunning}${d.rationale ? ` — ${d.rationale}` : ''}`;
     case 'approval.requested': return `${$(d.totalCents)} ≥ threshold — waiting for a human`;
     case 'approval.decided': return `${d.decision} by ${d.by}${d.auto ? ' (policy)' : ''}`;
     case 'invoice.issued': return `${d.invoiceId} · ${$(d.amountCents)}${d.currency && d.currency !== 'USD' ? ` · FX ${(d.fxBps / 10000).toFixed(4)} USD→${d.currency}` : ''}${d.priceBookVersion ? ` · price book ${d.priceBookVersion}` : ''}`;

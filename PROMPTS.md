@@ -88,4 +88,4 @@ The header's contents now sit in the same centred 1180px column as the page head
 
 > The logo needs to be bigger to be more legible.
 
-Header mark 28 → 40px (served at 2×), wordmark 16 → 18px, header 56 → 60px.
+Header mark 28 → 44px tall at its natural 1.6:1 aspect (tight crop, no padding), wordmark 16 → 18px, header 56 → 60px.

@@ -105,3 +105,9 @@ via a tiny escaping renderer — no HTML from the model or the server is trusted
 Cards 16 → 24px padding, deal rows and bodies 14/16px, chat bubbles 12/16px, log 16px; the logo
 gets 14px to the wordmark and a taller 68px header; the Pay-with trigger is 240px wide with the
 caret pinned right, and its menu 380px.
+
+**14.**
+
+> The note in the top right is unnecessary. Remove it.
+
+Removed the demo-clock / approval-threshold note from the header.

@@ -78,7 +78,6 @@
   header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
   header input { color:var(--ink); background:var(--base); border:0; box-shadow:0 0 0 1px var(--line); height:36px; padding:0 12px; border-radius:var(--r); font:inherit; font-weight:400 }
   header input::placeholder, form input::placeholder { color:var(--placeholder) }
-  #clock { font-size:13px; line-height:19.5px; color:var(--subtle); margin-left:auto }
 
   .pmctl { position:relative; display:inline-block }
   .pmbtn { display:inline-flex; align-items:center; gap:10px; min-width:240px; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); border-radius:var(--r); padding:0 10px 0 6px; font:500 14px/20px var(--font); cursor:pointer }
@@ -167,7 +166,6 @@
       <ul class="pmmenu" id="pmmenu" role="listbox" hidden></ul>
     </span>
   </label>
-  <span id="clock"></span>
 </div>
 </header>
 <div class="page">
@@ -215,7 +213,7 @@ function togglePm(force) { const m = $('#pmmenu'); const show = force ?? m.hidde
 function pickPm(id) { pmValue = id; renderPm(); togglePm(false); }
 document.addEventListener('click', e => { if (!$('#pmctl').contains(e.target)) togglePm(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePm(false); });
-fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); $('#clock').textContent = `1 day = ${c.secondsPerDay}s in this demo · approval needed at ${fmt(c.approvalThresholdCents)}+`; });
+fetch('/api/catalog').then(r => r.json()).then(c => { cfg = c; renderPm(); });
 
 // Minimal, safe rendering of the assistant's plain-text reply: paragraphs on blank lines,
 // "• " lines become a list, **bold** is honoured, everything else is escaped.

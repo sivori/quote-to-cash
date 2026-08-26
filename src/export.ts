@@ -127,7 +127,7 @@ class Pdf {
 
 /** WinAnsi-safe escaping: replace characters outside Latin-1, escape PDF string delimiters. */
 function esc(s: string): string {
-  return s.replace(/€/g, "\x80").replace(/[^\x20-\x7e\xa0-\xff]/g, (c) => ({ "—": "-", "–": "-", "×": "x", "−": "-", "·": "-", "→": "->", "’": "'", "“": '"', "”": '"' } as Record<string, string>)[c] ?? "?")
+  return s.replace(/[^\x20-\x7e\xa0-\xff]/g, (c) => ({ "€": "\x80", "—": "-", "–": "-", "×": "x", "−": "-", "·": "-", "→": "->", "’": "'", "“": '"', "”": '"' } as Record<string, string>)[c] ?? "?")
     .replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 function bytes(s: string): number { return latin1(s).length; }

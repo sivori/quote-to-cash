@@ -51,3 +51,10 @@ trademarked logos.
 > Open all external links in a new target, eg. _blank
 
 Every external link in the footer now has `target="_blank" rel="noopener"`.
+
+**7.**
+
+> Complete the P1, P2  UX findings. Keep orange primaries. Complete P3 polish items.
+
+Applied every P1/P2/P3 item from the review with orange primaries retained; the review and what
+was done with it are in `docs/ux-review.md`.

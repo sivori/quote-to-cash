@@ -3,76 +3,108 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Quote to Cash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --orange:#FF5E1F; --ink:#262626; --ink-2:#1F1F1F; --mute:#707070; --hair:#F0F0F0; --paper:#FDFDFC; --green:#1a7f37; --red:#b52831;
-          --font:Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  /* Tokens vendored from Cloudflare's Kumo design system (@cloudflare/kumo, theme-kumo.css, light) plus the
+     docs-site CTA orange. Kept dependency-free on purpose: Kumo itself is React + Tailwind v4. */
+  :root {
+    --orange:#FF5E1F; --orange-dark:#f0520f; --brand-blue:#056dff;
+    --ink:#171717; --ink-2:#0a0a0a; --subtle:#737373; --placeholder:#a1a1a1;
+    --canvas:#fafafa; --base:#fff; --elevated:#f8f8f8; --recessed:#f2f2f2;
+    --hairline:#e9e9e9; --line:rgba(0,0,0,.10); --line-strong:rgba(0,0,0,.25);
+    --success:#009966; --success-text:#006045; --success-tint:#dcfce7;
+    --warning-text:#944500; --warning-tint:#fef3e7;
+    --danger:#fb2c36; --danger-text:#c10007; --danger-tint:#ffe2e2; --danger-strong:#e7000b;
+    --info:#193cb8; --info-tint:#dbeafe;
+    --r:8px;
+    --font:"Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono:"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
   * { box-sizing:border-box }
-  body { margin:0; background:#fff; color:var(--ink); font:15px/22px var(--font); -webkit-font-smoothing:antialiased;
-         background-image:radial-gradient(rgba(38,38,38,.10) 1px, transparent 1px); background-size:14px 14px }
-  header { background:#fff; border-bottom:1px solid var(--hair); height:56px; display:flex; align-items:center; gap:20px; padding:0 20px }
-  header h1 { font-size:18px; font-weight:500; margin:0; letter-spacing:-.02em } header h1 b { color:var(--orange); font-weight:500 }
-  header label { color:var(--mute); font-size:14px; display:flex; align-items:center; gap:8px }
+  body { margin:0; background:var(--canvas); color:var(--ink); font:400 14px/1.5 var(--font); -webkit-font-smoothing:antialiased;
+         font-feature-settings:"cv02","cv03","cv04","calt" }
+  :where(button, input, a, [role=option], [role=button]):focus-visible { outline:2px solid var(--brand-blue); outline-offset:2px }
+  input:focus-visible { outline:none; box-shadow:0 0 0 1.5px rgba(23,23,23,.5) }
+  .num { font-family:var(--mono); font-variant-numeric:tabular-nums }
+
+  header { background:var(--base); border-bottom:1px solid var(--hairline); height:56px; display:flex; align-items:center; gap:24px; padding:0 20px }
+  header h1 { font-size:16px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em } header h1 b { color:var(--orange); font-weight:600 }
+  header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
+  header input { color:var(--ink); background:var(--base); border:0; box-shadow:0 0 0 1px var(--line); height:36px; padding:0 12px; border-radius:var(--r); font:inherit; font-weight:400 }
+  header input::placeholder, form input::placeholder { color:var(--placeholder) }
+  #clock { font-size:13px; line-height:19.5px; color:var(--subtle); margin-left:auto }
+
   .pmctl { position:relative; display:inline-block }
-  .pmbtn { display:inline-flex; align-items:center; gap:8px; background:#fff; color:var(--ink); border:1px solid var(--hair); border-radius:999px; padding:5px 12px 5px 6px; font-weight:400; font-size:14px }
-  .pmbtn::after { content:"⌄"; color:var(--mute); margin-left:2px; line-height:1 }
-  .pmbtn:hover { border-color:#d9d9d9 }
-  .pmmenu { position:absolute; top:calc(100% + 6px); left:0; z-index:10; list-style:none; margin:0; padding:6px; background:#fff; border:1px solid var(--hair); border-radius:12px; box-shadow:0 8px 24px rgba(38,38,38,.08); min-width:340px }
-  .pmmenu li { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; align-items:center; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:14px }
-  .pmmenu li:hover, .pmmenu li[aria-selected="true"] { background:var(--paper) }
+  .pmbtn { display:inline-flex; align-items:center; gap:8px; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); border-radius:var(--r); padding:0 10px 0 6px; font:500 14px/20px var(--font); cursor:pointer }
+  .pmbtn::after { content:""; width:8px; height:8px; border-right:1.5px solid var(--subtle); border-bottom:1.5px solid var(--subtle); transform:translateY(-2px) rotate(45deg); margin-left:4px }
+  .pmbtn:hover { background:var(--elevated) }
+  .pmmenu { position:absolute; top:calc(100% + 6px); left:0; z-index:10; list-style:none; margin:0; padding:4px; background:var(--base); border-radius:var(--r); box-shadow:0 0 0 1px var(--line), 0 8px 24px rgba(23,23,23,.08); min-width:340px }
+  .pmmenu li { display:grid; grid-template-columns:auto 1fr; gap:0 10px; align-items:center; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:14px; line-height:20px }
+  .pmmenu li:hover, .pmmenu li[aria-selected="true"] { background:var(--elevated) }
   .pmmenu li[aria-selected="true"] .l { font-weight:500 }
-  .pmmenu li .b { grid-row:span 2 } .pmmenu li .s { font-size:12.5px; color:var(--mute); grid-column:2 }
+  .pmmenu li .b { grid-row:span 2 } .pmmenu li .s { font-size:13px; line-height:19.5px; color:var(--subtle); grid-column:2 }
   .cardmark { width:34px; height:22px; border-radius:4px; display:inline-block; vertical-align:middle }
-  header input, select { color:var(--ink); border:1px solid var(--hair); background:#fff; padding:6px 12px; border-radius:999px; font:inherit; font-size:14px }
-  .hero { max-width:1140px; margin:16px auto 0; background:var(--orange); color:#fff; border-radius:16px; padding:32px; text-align:center }
-  .hero h2 { margin:0 0 8px; font-size:32px; line-height:1; font-weight:500; letter-spacing:-.025em; color:#fff }
-  .hero p { margin:0 auto; max-width:64ch; opacity:.92; font-size:15px }
-  @media (max-width:1180px) { .hero { margin-inline:20px } }
-  main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:20px; max-width:1180px; margin:0 auto }
+
+  /* Product-style page header (Cloudflare product pages don't use marketing heroes). */
+  .page { max-width:1180px; margin:0 auto; padding:24px 20px 0 }
+  .page h2 { margin:0 0 4px; font-size:24px; line-height:32px; font-weight:600; letter-spacing:-.02em; color:var(--ink) }
+  .page p { margin:0; font-size:14px; line-height:21px; color:var(--subtle); max-width:64ch }
+
+  main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:16px 20px; max-width:1180px; margin:0 auto }
   @media (max-width:900px) { main { grid-template-columns:1fr } }
-  section { background:var(--paper); border:1px solid var(--hair); border-radius:16px; padding:18px; min-width:0 }
-  h2 { font-size:14px; font-weight:500; color:var(--mute); margin:0 0 10px }
-  .help { font-size:13.5px; line-height:19px; color:var(--mute); margin:-2px 0 12px }
-  button { background:var(--ink-2); color:#fff; border:1px solid var(--ink-2); padding:8px 16px; border-radius:999px; cursor:pointer; font:inherit; font-size:14px; font-weight:500 }
-  button.ghost { background:#fff; color:var(--ink); border-color:var(--hair) } button.ghost:hover { border-color:#d9d9d9 }
-  button.primary { background:var(--orange); border-color:var(--orange) } button.primary:hover { background:#f0520f }
-  button:disabled { opacity:.45; cursor:not-allowed }
-  #log { height:300px; overflow:auto; display:flex; flex-direction:column; gap:10px; background:#fff; border:1px solid var(--hair); border-radius:12px; padding:12px; margin-bottom:10px }
-  .msg { padding:10px 14px; border-radius:14px; max-width:92%; white-space:pre-wrap; font-size:14px; line-height:20px }
+  section { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:16px; min-width:0 }
+  section h2 { font-size:16px; line-height:22px; font-weight:600; color:var(--ink); margin:0 0 4px }
+  .help { font-size:13px; line-height:19.5px; color:var(--subtle); margin:0 0 12px }
+
+  button { height:36px; padding:0 12px; border-radius:var(--r); border:0; cursor:pointer; font:500 14px/20px var(--font); background:var(--ink-2); color:#fff }
+  button:hover { background:#000 }
+  .ghost { background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line) } .ghost:hover { background:var(--elevated) }
+  /* Orange primaries kept by decision: on-brand with Cloudflare's own CTA, sub-AA for 14px text (known trade-off). */
+  .primary { background:var(--orange); color:#fff; box-shadow:0 0 0 1px var(--orange-dark) } .primary:hover { background:var(--orange-dark) }
+  button:disabled { opacity:.5; cursor:not-allowed }
+
+  #log { min-height:220px; max-height:40vh; overflow:auto; display:flex; flex-direction:column; gap:8px; background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:12px; margin-bottom:10px }
+  .msg { padding:8px 12px; border-radius:var(--r); max-width:92%; white-space:pre-wrap; font-size:14px; line-height:21px }
   .user { background:var(--ink-2); color:#fff; align-self:flex-end; border-bottom-right-radius:4px }
-  .assistant { background:var(--paper); border:1px solid var(--hair); align-self:flex-start; border-bottom-left-radius:4px }
-  form { display:flex; gap:8px } form input { flex:1; background:#fff; border:1px solid var(--hair); padding:10px 16px; border-radius:999px; font:inherit; font-size:14px }
+  .assistant { background:var(--elevated); align-self:flex-start; border-bottom-left-radius:4px }
+  form { display:flex; gap:8px }
+  form input { flex:1; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); padding:0 12px; border-radius:var(--r); font:inherit }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px }
-  .chip { background:#fff; color:var(--ink); border:1px solid var(--hair); border-radius:999px; padding:4px 12px; font-size:13px; font-weight:400 }
-  .chip::before { content:"↗ "; color:var(--mute) } .chip:hover { border-color:var(--orange); color:var(--orange) }
+  .chip { height:26px; padding:0 8px; border-radius:6px; background:var(--base); color:var(--ink); box-shadow:0 0 0 1px var(--line); font:500 13px/1 var(--font) }
+  .chip::before { content:"↗ "; color:var(--subtle) } .chip:hover { background:var(--elevated); box-shadow:0 0 0 1px var(--line-strong); color:var(--ink) }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 }
-  .deal { background:#fff; border:1px solid var(--hair); border-radius:12px; margin-bottom:10px; overflow:hidden }
-  .deal .head { display:flex; gap:10px; align-items:center; padding:10px 12px; cursor:pointer }
-  .deal .head .id { font-family:var(--mono); font-size:12.5px } .deal .head .req { color:var(--mute); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
-  .deal .head .amt { font-family:var(--mono); font-size:14px; font-weight:500 }
-  .badge { font-size:12px; line-height:18px; padding:0 8px; border-radius:999px; border:1px solid var(--hair); color:var(--mute); background:var(--paper); white-space:nowrap }
-  .badge.pending_approval { color:var(--orange); border-color:var(--orange); background:#fff }
-  .badge.paid { color:#fff; background:var(--green); border-color:var(--green) }
-  .badge.past_due { color:var(--red); border-color:var(--red); background:#fff }
-  .badge.collections { color:#fff; background:var(--red); border-color:var(--red) }
-  .badge.invoiced, .badge.approved { color:var(--ink); border-color:#d9d9d9 }
-  .deal .body { display:none; border-top:1px solid var(--hair); padding:10px 12px }
+
+  .deal { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); margin-bottom:8px; overflow:hidden }
+  .deal .head { display:flex; gap:10px; align-items:center; width:100%; height:auto; padding:10px 12px; background:none; color:inherit; text-align:left; border-radius:0; font:inherit }
+  .deal .head:hover { background:var(--elevated) }
+  .deal .head .id { font-family:var(--mono); font-size:13px } .deal .head .req { color:var(--subtle); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+  .deal .head .amt { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:14px; font-weight:500 }
+  .badge { font-size:12px; line-height:16px; font-weight:500; padding:2px 8px; border-radius:999px; background:#e5e5e5; color:#262626; white-space:nowrap }
+  .badge.pending_approval { background:var(--warning-tint); color:var(--warning-text) }
+  .badge.approved, .badge.invoiced { background:var(--info-tint); color:var(--info) }
+  .badge.paid { background:var(--success-tint); color:var(--success-text) }
+  .badge.past_due, .badge.rejected { background:var(--danger-tint); color:var(--danger-text) }
+  .badge.collections { background:var(--danger-strong); color:#fff }
+  .deal .body { display:none; border-top:1px solid var(--hairline); padding:12px }
   .deal.open .body { display:block }
   .stepper { display:grid; grid-template-columns:repeat(5,1fr); list-style:none; padding:0; margin:4px 0 12px; counter-reset:s }
-  .stepper li { position:relative; padding-left:26px; font-size:12px; color:var(--mute); line-height:16px }
-  .stepper li::before { counter-increment:s; content:counter(s); position:absolute; left:0; top:-2px; width:20px; height:20px; border-radius:50%; border:1px solid var(--hair); background:#fff; display:grid; place-items:center; font-size:11px }
-  .stepper li.done::before { background:var(--ink-2); border-color:var(--ink-2); color:#fff; content:"✓" }
-  .stepper li.on::before { border-color:var(--orange); color:var(--orange); box-shadow:0 0 0 3px rgba(255,94,31,.15) }
-  .stepper li.on { color:var(--orange) } .stepper li.fail::before { background:var(--red); border-color:var(--red); color:#fff; content:"!" }
-  .events { list-style:none; margin:0; padding:0; font-size:13px }
-  .events li { display:grid; grid-template-columns:58px 150px 1fr; gap:8px; padding:4px 0; border-top:1px solid var(--hair) }
-  .events .t { font-family:var(--mono); font-size:11.5px; color:var(--mute) } .events .k { font-family:var(--mono); font-size:12px }
-  .events .n { color:var(--ink) } .events li.notif .n { color:var(--ink); background:var(--paper); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
-  .events li.fail .k { color:var(--red) } .events li.ok .k { color:var(--green) }
-  .empty { color:var(--mute); font-size:14px; padding:12px }
-  footer { text-align:center; color:var(--mute); font-size:13px; padding:8px 20px 32px } footer a { color:var(--ink) }
+  .stepper li { position:relative; padding-left:26px; font-size:13px; color:var(--subtle); line-height:20px }
+  .stepper li::before { counter-increment:s; content:counter(s); position:absolute; left:0; top:0; width:20px; height:20px; border-radius:50%; box-shadow:0 0 0 1px var(--line); background:var(--base); display:grid; place-items:center; font-size:11px; color:var(--subtle) }
+  .stepper li.done::before { background:var(--ink-2); box-shadow:none; color:#fff; content:""; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='white'><path d='M232.5 72.5l-128 128a12 12 0 0 1-17 0l-56-56a12 12 0 0 1 17-17L96 175l119.5-119.5a12 12 0 0 1 17 17z'/></svg>"); background-size:12px; background-repeat:no-repeat; background-position:center }
+  .stepper li.on::before { box-shadow:0 0 0 2px var(--orange); color:var(--ink) }
+  .stepper li.on { color:var(--ink); font-weight:500 }
+  .stepper li.fail::before { background:var(--danger); box-shadow:none; color:#fff; content:"!" ; font-weight:600 }
+  .events { list-style:none; margin:0; padding:0; font-size:13px; max-height:240px; overflow:auto }
+  .events li { display:grid; grid-template-columns:62px 150px 1fr; gap:8px; padding:6px 0; border-top:1px solid var(--hairline) }
+  .events .t { font-family:var(--mono); font-size:12px; line-height:16px; color:var(--subtle); padding-top:2px } .events .k { font-family:var(--mono); font-size:13px }
+  .events li.notif .n { background:var(--elevated); border-left:2px solid var(--info); padding:2px 8px; border-radius:0 6px 6px 0 }
+  .events li.fail .k { color:var(--danger-text) } .events li.ok .k { color:var(--success-text) }
+  .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:32px 16px; text-align:center }
+  .empty b { display:block; font-size:14px; font-weight:600; margin-bottom:2px } .empty span { font-size:13px; color:var(--subtle) }
+  footer { text-align:center; color:var(--subtle); font-size:13px; padding:8px 20px 32px } footer a { color:var(--ink); text-decoration:none } footer a:hover { text-decoration:underline }
 </style>
 </head>
 <body>
@@ -85,9 +117,9 @@
       <ul class="pmmenu" id="pmmenu" role="listbox" hidden></ul>
     </span>
   </label>
-  <span id="clock" style="font-size:13px;color:var(--mute)"></span>
+  <span id="clock"></span>
 </header>
-<div class="hero">
+<div class="page">
   <h2>Type a deal. Watch it get paid.</h2>
   <p>Plain English → quote → approval → invoice → payment → dunning. One sentence in, a paid deal out.</p>
 </div>
@@ -101,13 +133,13 @@
       <button class="chip" onclick="ask(this.textContent)">200 enterprise seats and premium support, APAC, 3 years, for Globex</button>
       <button class="chip" onclick="ask(this.textContent)">a dozen widgets</button>
     </div>
-    <div id="log"></div>
-    <form onsubmit="return send(event)"><input id="q" placeholder="e.g. 50 Pro seats, 20 TB egress, EU, annual" autocomplete="off"><button class="primary">Quote</button></form>
+    <div id="log" role="log" aria-live="polite"></div>
+    <form onsubmit="return send(event)"><input id="q" placeholder="e.g. 50 Pro seats, 20 TB egress, EU, annual" autocomplete="off" aria-label="Describe the deal"><button class="primary">Quote</button></form>
   </section>
   <section>
     <h2>2 · Pipeline &amp; deal history</h2>
     <p class="help">One Workflow per deal. Deals of $10,000+ pause for your approval. Pick a test card in the header to script the payment — declines trigger dunning.</p>
-    <div id="deals"><div class="empty">No deals yet.</div></div>
+    <div id="deals"></div>
   </section>
 </main>
 <footer>Built on <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers/">Workers</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workflows/">Workflows</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/durable-objects/">Durable Objects</a> · <a target="_blank" rel="noopener" href="https://developers.cloudflare.com/workers-ai/">Workers AI</a> &nbsp;|&nbsp; <a target="_blank" rel="noopener" href="https://github.com/sivori/quote-to-cash">source</a></footer>
@@ -159,13 +191,13 @@ async function refresh() {
   const s = await api('GET', '');
   const key = cid() + ':' + (s.chat?.length ?? 0);
   if (key !== chatKey) { chatKey = key; $('#log').innerHTML = ''; (s.chat ?? []).forEach(m => add(m.role, m.content)); }
-  if (!s.deals?.length) { $('#deals').innerHTML = '<div class="empty">No deals yet. Describe one on the left.</div>'; return; }
+  if (!s.deals?.length) { $('#deals').innerHTML = '<div class="empty"><b>No deals yet</b><span>Describe one on the left, or pick a suggestion.</span></div>'; return; }
   $('#deals').innerHTML = s.deals.map(d => {
     const ev = s.events.filter(e => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
     const st = stepState(d);
     return `<div class="deal ${open.has(d.id) ? 'open' : ''}" id="${d.id}">
-      <div class="head" onclick="toggle('${d.id}')"><span class="id">${d.id}</span><span class="req">${d.request}</span><span class="badge ${d.status}">${LABEL[d.status] ?? d.status}</span><span class="amt">${fmt(d.quote.totalCents)}</span></div>
-      <div class="body">
+      <button type="button" class="head" aria-expanded="${open.has(d.id)}" aria-controls="${d.id}-body" onclick="toggle('${d.id}')"><span class="id">${d.id}</span><span class="req">${d.request}</span><span class="badge ${d.status}">${LABEL[d.status] ?? d.status}</span><span class="amt">${fmt(d.quote.totalCents)}</span></button>
+      <div class="body" id="${d.id}-body">
         <ol class="stepper">${STEPS.map((n, i) => `<li class="${st[i]}">${n}</li>`).join('')}</ol>
         ${d.status === 'pending_approval' ? `<div class="row"><button class="primary" onclick="decide('${d.id}','approved')">Approve ${fmt(d.quote.totalCents)}</button><button class="ghost" onclick="decide('${d.id}','rejected')">Reject</button><span class="help" style="margin:0">Workflow is paused on waitForEvent.</span></div>` : ''}
         <ul class="events">${ev.map(e => `<li class="${e.kind.endsWith('failed') ? 'fail' : e.kind.endsWith('succeeded') ? 'ok' : e.kind === 'notification.sent' ? 'notif' : ''}"><span class="t">${new Date(e.ts).toLocaleTimeString([], { hour12: false })}</span><span class="k">${e.kind}</span><span class="n">${detail(e)}</span></li>`).join('')}</ul>
@@ -188,7 +220,7 @@ function detail(e) {
     default: return d.customerName ? `for ${d.customerName}` : '';
   }
 }
-function toggle(id) { open.has(id) ? open.delete(id) : open.add(id); document.getElementById(id).classList.toggle('open'); }
+function toggle(id) { const on = !open.has(id); on ? open.add(id) : open.delete(id); const el = document.getElementById(id); el.classList.toggle('open', on); el.querySelector('.head').setAttribute('aria-expanded', String(on)); }
 async function decide(id, decision) { await api('POST', `/deals/${id}/decision`, { decision, by: 'ui' }); refresh(); }
 $('#customer').onchange = refresh;
 refresh(); setInterval(refresh, 2500);

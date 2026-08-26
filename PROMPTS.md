@@ -77,3 +77,9 @@ Restored the dotted canvas and brought orange back on non-text and large-text su
 contrast fixes hold: a 3px orange top bar on the header, an orange block before the page title,
 orange section numerals, orange chip/row hover and notification accents on the amber tint, and
 orange user chat bubbles (16px-equivalent weight 500 white — the same trade-off as the primaries).
+
+**10.**
+
+> Center the elements of the top menu so that on wider viewports the branding elements retain close association with the main elements of the ui.
+
+The header's contents now sit in the same centred 1180px column as the page header and main grid.

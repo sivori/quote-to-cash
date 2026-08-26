@@ -70,13 +70,15 @@
 
   header { background:var(--base); border-bottom:1px solid var(--hairline); border-top:3px solid var(--orange); padding:0 20px }
   /* Header contents share the page's 1180px column so the brand stays next to the UI on wide viewports. */
-  .bar { max-width:1140px; margin:0 auto; height:68px; display:flex; align-items:center; gap:24px }
+  .bar { max-width:1140px; margin:0 auto; height:68px; display:flex; align-items:center; gap:32px }
+  @media (max-width:760px) { .bar { height:auto; flex-wrap:wrap; padding:10px 0; gap:12px } .controls { margin-left:0; flex-wrap:wrap; gap:12px } }
   .skip { position:absolute; left:-999px; top:8px; background:var(--base); color:var(--ink); padding:8px 12px; border-radius:var(--r); box-shadow:0 0 0 1px var(--line); z-index:20 } .skip:focus { left:8px }
-  .brand { display:inline-flex; align-items:center; gap:14px; color:inherit; text-decoration:none; border-radius:6px; padding:6px 10px 6px 0; margin-right:12px }
+  .brand { display:inline-flex; align-items:center; gap:14px; color:inherit; text-decoration:none; border-radius:6px; padding:6px 0 }
   .brand img { height:44px; width:auto; display:block }
   header h1 { font-size:18px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em } header h1 b { color:var(--orange); font-weight:600 }
-  header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
-  header label.pay { margin-left:auto }
+  /* Brand left; the two controls are one right-aligned group with a consistent 24px rhythm. */
+  .controls { margin-left:auto; display:flex; align-items:center; gap:24px }
+  header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:10px; white-space:nowrap }
   header input { color:var(--ink); background:var(--base); border:0; box-shadow:0 0 0 1px var(--line); height:36px; padding:0 12px; border-radius:var(--r); font:inherit; font-weight:400 }
   header input::placeholder, form input::placeholder { color:var(--placeholder) }
 
@@ -84,7 +86,7 @@
   .pmbtn { display:inline-flex; align-items:center; gap:10px; min-width:240px; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); border-radius:var(--r); padding:0 10px 0 6px; font:500 14px/20px var(--font); cursor:pointer }
   .pmbtn::after { content:""; margin-left:auto; width:8px; height:8px; border-right:1.5px solid var(--subtle); border-bottom:1.5px solid var(--subtle); transform:translateY(-2px) rotate(45deg); margin-left:4px }
   .pmbtn:hover { background:var(--elevated) }
-  .pmmenu { position:absolute; top:calc(100% + 6px); left:0; z-index:10; list-style:none; margin:0; padding:4px; background:var(--base); border-radius:var(--r); box-shadow:0 0 0 1px var(--line), 0 8px 24px rgba(23,23,23,.08); min-width:380px }
+  .pmmenu { position:absolute; top:calc(100% + 6px); right:0; z-index:10; list-style:none; margin:0; padding:4px; background:var(--base); border-radius:var(--r); box-shadow:0 0 0 1px var(--line), 0 8px 24px rgba(23,23,23,.08); min-width:380px }
   .pmmenu li { display:grid; grid-template-columns:auto 1fr; gap:0 10px; align-items:center; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:14px; line-height:20px }
   .pmmenu li:hover, .pmmenu li[aria-selected="true"] { background:var(--elevated) }
   .pmmenu li[aria-selected="true"] .l { font-weight:500 }
@@ -168,13 +170,15 @@
 <header>
 <div class="bar">
   <a class="brand" href="/" aria-label="Quote to Cash — home"><img src="/brand/mark-h96.png" alt="" height="44" decoding="async"><h1><b>Quote</b> to Cash</h1></a>
-  <label>Customer <input id="customer" value="acme" style="width:9em"></label>
-  <label class="pay">Pay with
-    <span class="pmctl" id="pmctl">
-      <button type="button" class="pmbtn" id="pmbtn" aria-haspopup="listbox" aria-expanded="false" onclick="togglePm()"></button>
-      <ul class="pmmenu" id="pmmenu" role="listbox" hidden></ul>
-    </span>
-  </label>
+  <div class="controls">
+    <label>Customer <input id="customer" value="acme" style="width:10em"></label>
+    <label>Pay with
+      <span class="pmctl" id="pmctl">
+        <button type="button" class="pmbtn" id="pmbtn" aria-haspopup="listbox" aria-expanded="false" onclick="togglePm()"></button>
+        <ul class="pmmenu" id="pmmenu" role="listbox" hidden></ul>
+      </span>
+    </label>
+  </div>
 </div>
 </header>
 <div class="page">

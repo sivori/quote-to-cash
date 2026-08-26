@@ -126,3 +126,11 @@ same column the right card ends on.
 Added `CustomerAccount.clearAll()` (one transaction over deals, events and chat), `DELETE
 /api/customers/:id`, a "Clear history" button in the pipeline panel, and a native `<dialog>`
 confirmation naming the customer with a destructive-styled "Delete everything" action.
+
+**17.**
+
+> Reorganize the top menu items: spacing and alignment.
+
+Header is now brand on the left and a single right-aligned control group (Customer, Pay with) on
+a 24px rhythm, label-to-control gap 10px, menu opening right-aligned under its trigger; wraps
+below 760px.

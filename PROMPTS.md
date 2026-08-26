@@ -22,3 +22,11 @@ Workflow (policy → `waitForEvent` approval → invoice → charge → 1d/3d/7d
 notices → collections), scripted payment simulator, UI, 7 unit tests, CI. Verified on production:
 a $100 deal auto-approved and paid; a $29,172 deal waited for approval, declined twice, sent a
 reminder and a warning, and collected on attempt 3.
+
+**3.**
+
+> spawn a parallel agent to do a ux pass against cloudflare's ux guidelines or style guidelines and if not available use the css styling implicit in their production corporate site. Attend to typographical hierarchy, UI elements and any component libraries we should use. Ask clarifying questions.
+
+Clarifying answers (via the question prompt): review first, then apply · adopt a component library
+only if Cloudflare has a usable one · developers.cloudflare.com / dash product UI is authoritative
+over the marketing site · light mode only. Spawned a research agent with that brief.

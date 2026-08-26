@@ -62,12 +62,13 @@
   }
   * { box-sizing:border-box }
   body { margin:0; background:var(--canvas); color:var(--ink); font:400 14px/1.5 var(--font); -webkit-font-smoothing:antialiased;
-         font-feature-settings:"cv02","cv03","cv04","calt" }
+         font-feature-settings:"cv02","cv03","cv04","calt";
+         background-image:radial-gradient(rgba(38,38,38,.10) 1px, transparent 1px); background-size:14px 14px }
   :where(button, input, a, [role=option], [role=button]):focus-visible { outline:2px solid var(--brand-blue); outline-offset:2px }
   input:focus-visible { outline:none; box-shadow:0 0 0 1.5px rgba(23,23,23,.5) }
   .num { font-family:var(--mono); font-variant-numeric:tabular-nums }
 
-  header { background:var(--base); border-bottom:1px solid var(--hairline); height:56px; display:flex; align-items:center; gap:24px; padding:0 20px }
+  header { background:var(--base); border-bottom:1px solid var(--hairline); border-top:3px solid var(--orange); height:56px; display:flex; align-items:center; gap:24px; padding:0 20px }
   .skip { position:absolute; left:-999px; top:8px; background:var(--base); color:var(--ink); padding:8px 12px; border-radius:var(--r); box-shadow:0 0 0 1px var(--line); z-index:20 } .skip:focus { left:8px }
   .brand { display:inline-flex; align-items:center; gap:8px; color:inherit; text-decoration:none; border-radius:6px }
   .brand img { width:28px; height:28px; display:block }
@@ -91,12 +92,14 @@
   /* Product-style page header (Cloudflare product pages don't use marketing heroes). */
   .page { max-width:1180px; margin:0 auto; padding:24px 20px 0 }
   .page h2 { margin:0 0 4px; font-size:24px; line-height:32px; font-weight:600; letter-spacing:-.02em; color:var(--ink) }
+  .page h2::before { content:""; display:inline-block; width:10px; height:22px; background:var(--orange); border-radius:3px; margin:0 12px -3px 0 }
   .page p { margin:0; font-size:14px; line-height:21px; color:var(--subtle); max-width:64ch }
 
   main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:16px 20px; max-width:1180px; margin:0 auto }
   @media (max-width:900px) { main { grid-template-columns:1fr } }
   section { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:16px; min-width:0 }
   section h2 { font-size:16px; line-height:22px; font-weight:600; color:var(--ink); margin:0 0 4px }
+  section h2::first-letter { color:var(--orange) }
   .help { font-size:13px; line-height:19.5px; color:var(--subtle); margin:0 0 12px }
 
   button { height:36px; padding:0 12px; border-radius:var(--r); border:0; cursor:pointer; font:500 14px/20px var(--font); background:var(--ink-2); color:#fff }
@@ -108,7 +111,7 @@
 
   #log { min-height:220px; max-height:40vh; overflow:auto; display:flex; flex-direction:column; gap:8px; background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:12px; margin-bottom:10px }
   .msg { padding:8px 12px; border-radius:var(--r); max-width:92%; white-space:pre-wrap; font-size:14px; line-height:21px }
-  .user { background:var(--ink-2); color:#fff; align-self:flex-end; border-bottom-right-radius:4px }
+  .user { background:var(--orange); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; font-weight:500 }
   .assistant { background:var(--elevated); align-self:flex-start; border-bottom-left-radius:4px }
   form { display:flex; gap:8px }
   form input { flex:1; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); padding:0 12px; border-radius:var(--r); font:inherit }
@@ -119,7 +122,7 @@
 
   .deal { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); margin-bottom:8px; overflow:hidden }
   .deal .head { display:flex; gap:10px; align-items:center; width:100%; height:auto; padding:10px 12px; background:none; color:inherit; text-align:left; border-radius:0; font:inherit }
-  .deal .head:hover { background:var(--elevated) }
+  .deal .head:hover { background:var(--warning-tint) }
   .deal .head .id { font-family:var(--mono); font-size:13px } .deal .head .req { color:var(--subtle); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
   .deal .head .amt { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:14px; font-weight:500 }
   .badge { font-size:12px; line-height:16px; font-weight:500; padding:2px 8px; border-radius:999px; background:#e5e5e5; color:#262626; white-space:nowrap }
@@ -140,7 +143,7 @@
   .events { list-style:none; margin:0; padding:0; font-size:13px; max-height:240px; overflow:auto }
   .events li { display:grid; grid-template-columns:62px 150px 1fr; gap:8px; padding:6px 0; border-top:1px solid var(--hairline) }
   .events .t { font-family:var(--mono); font-size:12px; line-height:16px; color:var(--subtle); padding-top:2px } .events .k { font-family:var(--mono); font-size:13px }
-  .events li.notif .n { background:var(--elevated); border-left:2px solid var(--info); padding:2px 8px; border-radius:0 6px 6px 0 }
+  .events li.notif .n { background:var(--warning-tint); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
   .events li.fail .k { color:var(--danger-text) } .events li.ok .k { color:var(--success-text) }
   .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:32px 16px; text-align:center }
   .empty b { display:block; font-size:14px; font-weight:600; margin-bottom:2px } .empty span { font-size:13px; color:var(--subtle) }
@@ -150,7 +153,7 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header>
-  <a class="brand" href="/" aria-label="Quote to Cash — home"><img src="/brand/mark.png" alt="" width="28" height="28" decoding="async"><h1><b>Quote</b> to Cash</h1></a>
+  <a class="brand" href="/" aria-label="Quote to Cash — home"><img src="/brand/mark-56.png" srcset="/brand/mark-56.png 2x" alt="" width="28" height="28" decoding="async"><h1><b>Quote</b> to Cash</h1></a>
   <label>Customer <input id="customer" value="acme" style="width:9em"></label>
   <label>Pay with
     <span class="pmctl" id="pmctl">

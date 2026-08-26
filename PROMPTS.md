@@ -68,3 +68,12 @@ Cut the mark from the supplied logo for the header, favicons, apple-touch and PW
 Open Graph and Twitter cards, a web manifest, and SoftwareApplication JSON-LD. Accessibility: the
 mark is decorative (`alt=""`) with the wordmark kept as real text inside a labelled home link,
 plus a skip-to-content link and a `main` landmark. Source image kept at `docs/logo-source.jpeg`.
+
+**9.**
+
+> The UX pass reduced the cloudflare brand elements. Include the dotted background and orange palette.
+
+Restored the dotted canvas and brought orange back on non-text and large-text surfaces so the P1
+contrast fixes hold: a 3px orange top bar on the header, an orange block before the page title,
+orange section numerals, orange chip/row hover and notification accents on the amber tint, and
+orange user chat bubbles (16px-equivalent weight 500 white — the same trade-off as the primaries).

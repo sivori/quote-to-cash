@@ -97,3 +97,11 @@ Header mark 28 → 44px tall at its natural 1.6:1 aspect (tight crop, no padding
 The assistant reply is now emitted as blank-line-separated paragraphs (heading, line-item list,
 adjustments, bold total, approval note) and rendered as real paragraphs and lists with spacing,
 via a tiny escaping renderer — no HTML from the model or the server is trusted.
+
+**13.**
+
+> Add more padding within the cards, around the logo. "Pay with" dropdown needs to be wider.
+
+Cards 16 → 24px padding, deal rows and bodies 14/16px, chat bubbles 12/16px, log 16px; the logo
+gets 14px to the wordmark and a taller 68px header; the Pay-with trigger is 240px wide with the
+caret pinned right, and its menu 380px.

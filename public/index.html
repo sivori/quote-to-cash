@@ -70,9 +70,9 @@
 
   header { background:var(--base); border-bottom:1px solid var(--hairline); border-top:3px solid var(--orange); padding:0 20px }
   /* Header contents share the page's 1180px column so the brand stays next to the UI on wide viewports. */
-  .bar { max-width:1180px; margin:0 auto; height:60px; display:flex; align-items:center; gap:24px }
+  .bar { max-width:1180px; margin:0 auto; height:68px; display:flex; align-items:center; gap:24px }
   .skip { position:absolute; left:-999px; top:8px; background:var(--base); color:var(--ink); padding:8px 12px; border-radius:var(--r); box-shadow:0 0 0 1px var(--line); z-index:20 } .skip:focus { left:8px }
-  .brand { display:inline-flex; align-items:center; gap:8px; color:inherit; text-decoration:none; border-radius:6px }
+  .brand { display:inline-flex; align-items:center; gap:14px; color:inherit; text-decoration:none; border-radius:6px; padding:6px 10px 6px 0; margin-right:12px }
   .brand img { height:44px; width:auto; display:block }
   header h1 { font-size:18px; line-height:24px; font-weight:600; margin:0; letter-spacing:-.01em } header h1 b { color:var(--orange); font-weight:600 }
   header label { color:var(--ink); font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px }
@@ -81,10 +81,10 @@
   #clock { font-size:13px; line-height:19.5px; color:var(--subtle); margin-left:auto }
 
   .pmctl { position:relative; display:inline-block }
-  .pmbtn { display:inline-flex; align-items:center; gap:8px; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); border-radius:var(--r); padding:0 10px 0 6px; font:500 14px/20px var(--font); cursor:pointer }
-  .pmbtn::after { content:""; width:8px; height:8px; border-right:1.5px solid var(--subtle); border-bottom:1.5px solid var(--subtle); transform:translateY(-2px) rotate(45deg); margin-left:4px }
+  .pmbtn { display:inline-flex; align-items:center; gap:10px; min-width:240px; height:36px; background:var(--base); color:var(--ink); border:0; box-shadow:0 0 0 1px var(--line); border-radius:var(--r); padding:0 10px 0 6px; font:500 14px/20px var(--font); cursor:pointer }
+  .pmbtn::after { content:""; margin-left:auto; width:8px; height:8px; border-right:1.5px solid var(--subtle); border-bottom:1.5px solid var(--subtle); transform:translateY(-2px) rotate(45deg); margin-left:4px }
   .pmbtn:hover { background:var(--elevated) }
-  .pmmenu { position:absolute; top:calc(100% + 6px); left:0; z-index:10; list-style:none; margin:0; padding:4px; background:var(--base); border-radius:var(--r); box-shadow:0 0 0 1px var(--line), 0 8px 24px rgba(23,23,23,.08); min-width:340px }
+  .pmmenu { position:absolute; top:calc(100% + 6px); left:0; z-index:10; list-style:none; margin:0; padding:4px; background:var(--base); border-radius:var(--r); box-shadow:0 0 0 1px var(--line), 0 8px 24px rgba(23,23,23,.08); min-width:380px }
   .pmmenu li { display:grid; grid-template-columns:auto 1fr; gap:0 10px; align-items:center; padding:8px 10px; border-radius:6px; cursor:pointer; font-size:14px; line-height:20px }
   .pmmenu li:hover, .pmmenu li[aria-selected="true"] { background:var(--elevated) }
   .pmmenu li[aria-selected="true"] .l { font-weight:500 }
@@ -99,7 +99,7 @@
 
   main { display:grid; grid-template-columns:5fr 6fr; gap:16px; padding:16px 20px; max-width:1180px; margin:0 auto }
   @media (max-width:900px) { main { grid-template-columns:1fr } }
-  section { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:16px; min-width:0 }
+  section { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:24px; min-width:0 }
   section h2 { font-size:16px; line-height:22px; font-weight:600; color:var(--ink); margin:0 0 4px }
   section h2::first-letter { color:var(--orange) }
   .help { font-size:13px; line-height:19.5px; color:var(--subtle); margin:0 0 12px }
@@ -111,8 +111,8 @@
   .primary { background:var(--orange); color:#fff; box-shadow:0 0 0 1px var(--orange-dark) } .primary:hover { background:var(--orange-dark) }
   button:disabled { opacity:.5; cursor:not-allowed }
 
-  #log { min-height:220px; max-height:40vh; overflow:auto; display:flex; flex-direction:column; gap:8px; background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:12px; margin-bottom:10px }
-  .msg { padding:10px 14px; border-radius:var(--r); max-width:92%; font-size:14px; line-height:21px }
+  #log { min-height:220px; max-height:40vh; overflow:auto; display:flex; flex-direction:column; gap:10px; background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); padding:16px; margin-bottom:12px }
+  .msg { padding:12px 16px; border-radius:var(--r); max-width:92%; font-size:14px; line-height:21px }
   .msg p { margin:0 } .msg p + p, .msg p + ul, .msg ul + p { margin-top:8px }
   .msg ul { margin:0; padding-left:18px } .msg li { margin:2px 0 }
   .msg strong { font-weight:600 } .msg .warn { color:var(--warning-text) }
@@ -126,7 +126,7 @@
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0 }
 
   .deal { background:var(--base); border:1px solid var(--hairline); border-radius:var(--r); margin-bottom:8px; overflow:hidden }
-  .deal .head { display:flex; gap:10px; align-items:center; width:100%; height:auto; padding:10px 12px; background:none; color:inherit; text-align:left; border-radius:0; font:inherit }
+  .deal .head { display:flex; gap:12px; align-items:center; width:100%; height:auto; padding:14px 16px; background:none; color:inherit; text-align:left; border-radius:0; font:inherit }
   .deal .head:hover { background:var(--warning-tint) }
   .deal .head .id { font-family:var(--mono); font-size:13px } .deal .head .req { color:var(--subtle); font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
   .deal .head .amt { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:14px; font-weight:500 }
@@ -136,7 +136,7 @@
   .badge.paid { background:var(--success-tint); color:var(--success-text) }
   .badge.past_due, .badge.rejected { background:var(--danger-tint); color:var(--danger-text) }
   .badge.collections { background:var(--danger-strong); color:#fff }
-  .deal .body { display:none; border-top:1px solid var(--hairline); padding:12px }
+  .deal .body { display:none; border-top:1px solid var(--hairline); padding:16px }
   .deal.open .body { display:block }
   .stepper { display:grid; grid-template-columns:repeat(5,1fr); list-style:none; padding:0; margin:4px 0 12px; counter-reset:s }
   .stepper li { position:relative; padding-left:26px; font-size:13px; color:var(--subtle); line-height:20px }
@@ -150,7 +150,7 @@
   .events .t { font-family:var(--mono); font-size:12px; line-height:16px; color:var(--subtle); padding-top:2px } .events .k { font-family:var(--mono); font-size:13px }
   .events li.notif .n { background:var(--warning-tint); border-left:2px solid var(--orange); padding:2px 8px; border-radius:0 6px 6px 0 }
   .events li.fail .k { color:var(--danger-text) } .events li.ok .k { color:var(--success-text) }
-  .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:32px 16px; text-align:center }
+  .empty { border:1px dashed #e5e5e5; border-radius:var(--r); padding:40px 24px; text-align:center }
   .empty b { display:block; font-size:14px; font-weight:600; margin-bottom:2px } .empty span { font-size:13px; color:var(--subtle) }
   footer { text-align:center; color:var(--subtle); font-size:13px; padding:8px 20px 32px } footer a { color:var(--ink); text-decoration:none } footer a:hover { text-decoration:underline }
 </style>

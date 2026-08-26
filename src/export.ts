@@ -1,16 +1,16 @@
 // Deal-history exports. CSV is a straight table; the PDF is written by a tiny dependency-free
 // writer (core Helvetica fonts, text only) — enough for a statement, and nothing to bundle.
 import type { Deal, Event } from "./account";
-import { fmt } from "./pricing";
+import { fmt, fxLabel } from "./pricing";
 import { TERMS, type Currency } from "./catalog";
 
 const iso = (ts: number | null | undefined) => (ts ? new Date(ts).toISOString() : "");
 
 export function dealsCsv(customerId: string, deals: Deal[]): string {
-  const cols = ["deal_id", "customer", "created_at", "status", "customer_name", "region", "term", "months", "line_items", "currency", "subtotal", "region_uplift", "term_discount", "total", "approval", "approved_by", "invoice_id", "invoice_issued_at", "payment_method", "request"];
+  const cols = ["deal_id", "customer", "created_at", "status", "customer_name", "region", "term", "months", "line_items", "currency", "fx_rate", "price_book", "subtotal", "region_uplift", "term_discount", "total", "approval", "approved_by", "invoice_id", "invoice_issued_at", "payment_method", "request"];
   const rows = deals.map((d) => [
     d.id, customerId, iso(d.createdAt), d.status, d.parsed.customerName ?? "", d.quote.region, d.quote.term, d.quote.months,
-    d.quote.lines.map((l) => `${l.quantity} x ${l.label}`).join("; "), d.quote.currency,
+    d.quote.lines.map((l) => `${l.quantity} x ${l.label}`).join("; "), d.quote.currency, (d.quote.fxBps / 10_000).toFixed(4), d.quote.priceBookVersion,
     cents(d.quote.subtotalCents), cents(d.quote.regionUpliftCents), cents(-d.quote.termDiscountCents), cents(d.quote.totalCents),
     d.approval?.decision ?? "", d.approval ? (d.approval.auto ? "policy" : d.approval.by) : "",
     d.invoice?.id ?? "", iso(d.invoice?.issuedAt), d.paymentMethod, d.request,
@@ -48,6 +48,7 @@ export function dealsPdf(customerId: string, deals: Deal[], events: Event[]): Ui
     doc.cols(["Total", $(d.quote.totalCents)], 11, true);
     if (d.approval) doc.text(`Approval: ${d.approval.decision} by ${d.approval.auto ? "policy" : d.approval.by} at ${iso(d.approval.at).slice(0, 16).replace("T", " ")}`, 9.5, false, 0.45);
     if (d.invoice) doc.text(`Invoice ${d.invoice.id} for ${$(d.invoice.amountCents)}, issued ${iso(d.invoice.issuedAt).slice(0, 10)}, due ${iso(d.invoice.dueAt).slice(0, 10)}`, 9.5, false, 0.45);
+    if (d.invoice) doc.text(`Rated on price book ${d.invoice.priceBookVersion}${d.invoice.currency !== "USD" ? ` at FX ${fxLabel(d.invoice.fxBps, d.invoice.currency)}` : ""}`, 9.5, false, 0.45);
     const ev = events.filter((e) => e.dealId === d.id).sort((a, b) => a.seq - b.seq);
     const pay = ev.filter((e) => e.kind.startsWith("payment.") || e.kind === "dunning.scheduled" || e.kind === "deal.collections");
     for (const e of pay) doc.text(`  ${iso(e.ts).slice(11, 19)}  ${e.kind.padEnd(18)}  ${summ(e, d.quote.currency)}`, 8.5, false, 0.45, true);

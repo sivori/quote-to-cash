@@ -1,6 +1,6 @@
 // Deterministic pricing. Pure functions over the catalog; the LLM never sees this file's inputs
 // until they are already numbers, and never produces a price.
-import { CATALOG, REGIONS, TERMS, type Currency, type Region, type Sku, type Term } from "./catalog";
+import { CATALOG, PRICE_BOOK_VERSION, REGIONS, TERMS, type Currency, type Region, type Sku, type Term } from "./catalog";
 
 export interface QuoteInput {
   lines: { sku: Sku; quantity: number }[];
@@ -24,6 +24,10 @@ export interface Quote {
   region: Region;
   /** Currency of every cents figure in this quote. */
   currency: Currency;
+  /** USD→currency rate applied to list prices, in basis points (10000 = 1.0000). */
+  fxBps: number;
+  /** The price book this quote was rated against; explains the rate after the book changes. */
+  priceBookVersion: string;
   term: Term;
   months: number;
   subtotalCents: number;
@@ -53,10 +57,15 @@ export function price(input: QuoteInput): Quote {
   const regionUpliftCents = withRegion - subtotalCents;
   const termDiscountCents = applyBps(withRegion, term.discountBps);
   const totalCents = withRegion - termDiscountCents;
-  return { lines, region: input.region, currency: region.currency, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, totalCents };
+  return { lines, region: input.region, currency: region.currency, fxBps: region.fxBps, priceBookVersion: PRICE_BOOK_VERSION, term: input.term, months: term.months, subtotalCents, regionUpliftCents, termDiscountCents, totalCents };
 }
 
 /** Currency-aware formatting: USD as $29,172.00; EUR in European style as 29.172,00 €. */
+/** "0.9200 USD→EUR" — the rate as a human reads it, from its basis points. */
+export function fxLabel(fxBps: number, currency: Currency): string {
+  return `${(fxBps / 10_000).toFixed(4)} USD→${currency}`;
+}
+
 export function fmt(cents: number, currency: Currency = "USD"): string {
   const locale = currency === "EUR" ? "de-DE" : "en-US";
   return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 2 }).format(cents / 100);

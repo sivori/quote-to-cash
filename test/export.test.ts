@@ -7,7 +7,7 @@ const deal: any = {
   parsed: { customerName: "Acme", lines: [], region: "EU", term: "annual", paymentMethod: null, unresolved: [], notes: null },
   quote: price({ lines: [{ sku: "seat_pro", quantity: 50 }], region: "EU", term: "annual" }), paymentMethod: "card_ok",
   needsApproval: true, approval: { decision: "approved", by: "chris", at: 1_700_000_100_000, auto: false },
-  invoice: { id: "inv_deal_1", amountCents: 1_032_240, currency: "EUR", issuedAt: 1_700_000_200_000, dueAt: 1_702_592_200_000 }, workflowId: "deal_1", updatedAt: 0,
+  invoice: { id: "inv_deal_1", amountCents: 1_032_240, currency: "EUR", fxBps: 9_200, priceBookVersion: "2026-08-v1", issuedAt: 1_700_000_200_000, dueAt: 1_702_592_200_000 }, workflowId: "deal_1", updatedAt: 0,
 };
 
 describe("exports", () => {
@@ -17,7 +17,7 @@ describe("exports", () => {
     expect(head.startsWith("deal_id,customer,")).toBe(true);
     expect(row).toContain('"\'=HYPERLINK(""x"")"');
     // EU deal: EUR at the 0.92 rate → 50 × €18.40 × 12 = €11,040 subtotal
-    expect(row).toContain(",EUR,11040.00,");
+    expect(row).toContain(",EUR,0.9200,2026-08-v1,11040.00,");
     expect(row).toContain(",-1821.60,"); // negative amounts are numbers, not formulas
   });
   it("writes a parseable PDF", () => {
@@ -31,6 +31,7 @@ describe("exports", () => {
     const needle = [...new TextEncoder().encode("10.322,40"), 0xa0, 0x80];
     const hit = pdf.findIndex((_, i) => needle.every((b, j) => pdf[i + j] === b));
     expect(hit).toBeGreaterThan(-1);
+    expect(text).toContain("Rated on price book 2026-08-v1 at FX 0.9200 USD->EUR");
     // xref offsets must point at "N 0 obj"
     const startxref = Number(text.match(/startxref\n(\d+)/)![1]);
     expect(text.slice(startxref, startxref + 4)).toBe("xref");

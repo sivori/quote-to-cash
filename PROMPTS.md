@@ -162,3 +162,12 @@ parser at the cap · per-IP quota too · visible meter. Built `Budget` (singleto
 in micro-dollars from the model's reported usage at Workers AI's published rates, per-IP daily
 quota, 1 s burst limit), `parseDeterministic` (catalog-alias keyword parser used when the LLM is
 paused, with tests on the chip phrasings), `/api/budget`, and a footer meter.
+
+**21.**
+
+> Include FX rate on invoice.
+
+Every quote and invoice now carries `fxBps` and `priceBookVersion` (a constant bumped whenever a
+price, uplift, discount or rate changes). Shown in the assistant reply for non-USD deals, on the
+`invoice.issued` timeline entry, as `fx_rate` / `price_book` CSV columns, and as a "Rated on price
+book … at FX …" line in the PDF.

@@ -23,7 +23,7 @@ export interface Deal {
   status: DealStatus;
   needsApproval: boolean;
   approval: { decision: "approved" | "rejected"; by: string; at: number; auto: boolean } | null;
-  invoice: { id: string; amountCents: number; currency: Currency; issuedAt: number; dueAt: number } | null;
+  invoice: { id: string; amountCents: number; currency: Currency; fxBps: number; priceBookVersion: string; issuedAt: number; dueAt: number } | null;
   workflowId: string | null;
   createdAt: number;
   updatedAt: number;
@@ -110,10 +110,10 @@ export class CustomerAccount extends DurableObject<Env> {
     const d = this.must(dealId);
     if (d.invoice) return d;
     const now = Date.now();
-    d.invoice = { id: `inv_${dealId}`, amountCents: d.quote.totalCents, currency: d.quote.currency, issuedAt: now, dueAt: now + dueDays * 86_400_000 };
+    d.invoice = { id: `inv_${dealId}`, amountCents: d.quote.totalCents, currency: d.quote.currency, fxBps: d.quote.fxBps, priceBookVersion: d.quote.priceBookVersion, issuedAt: now, dueAt: now + dueDays * 86_400_000 };
     d.status = "invoiced";
     this.save(d);
-    this.log(dealId, "invoice.issued", { invoiceId: d.invoice.id, amountCents: d.invoice.amountCents });
+    this.log(dealId, "invoice.issued", { invoiceId: d.invoice.id, amountCents: d.invoice.amountCents, currency: d.invoice.currency, fxBps: d.invoice.fxBps, priceBookVersion: d.invoice.priceBookVersion });
     return d;
   }
 

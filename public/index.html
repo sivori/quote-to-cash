@@ -304,7 +304,7 @@ function detail(e, cur) {
     case 'quote.priced': return `${$(d.totalCents)} · ${d.region} · ${d.term}`;
     case 'approval.requested': return `${$(d.totalCents)} ≥ threshold — waiting for a human`;
     case 'approval.decided': return `${d.decision} by ${d.by}${d.auto ? ' (policy)' : ''}`;
-    case 'invoice.issued': return `${d.invoiceId} · ${$(d.amountCents)}`;
+    case 'invoice.issued': return `${d.invoiceId} · ${$(d.amountCents)}${d.currency && d.currency !== 'USD' ? ` · FX ${(d.fxBps / 10000).toFixed(4)} USD→${d.currency}` : ''}${d.priceBookVersion ? ` · price book ${d.priceBookVersion}` : ''}`;
     case 'payment.attempted': return `attempt ${d.attempt} · ${d.reference}`;
     case 'payment.succeeded': return `${$(d.amountCents)} on attempt ${d.attempt}`;
     case 'payment.failed': return `attempt ${d.attempt} · ${d.code}${d.retryable ? '' : ' (not retryable)'}`;

@@ -24,6 +24,9 @@ export const CATALOG: CatalogItem[] = [
 
 export type Currency = "USD" | "EUR";
 
+/** Bump when any price, uplift, discount or FX rate changes; every quote and invoice carries it. */
+export const PRICE_BOOK_VERSION = "2026-08-v1";
+
 /**
  * Regions: uplift in basis points (data residency and local infrastructure cost more), the currency
  * the customer is quoted in, and the price-book FX rate (bps) used to express USD list prices in

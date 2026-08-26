@@ -7,6 +7,7 @@ describe("pricing", () => {
   it("prices the canonical deal in EUR: 50 Pro seats, 20 TB egress, EU, annual", () => {
     const q = price({ lines: [{ sku: "seat_pro", quantity: 50 }, { sku: "egress_tb", quantity: 20 }], region: "EU", term: "annual" });
     expect(q.currency).toBe("EUR");
+    expect(q.fxBps).toBe(9_200); expect(q.priceBookVersion).toMatch(/^\d{4}-\d{2}-v\d+$/);
     // unit prices at the 0.92 price-book rate: €18.40/seat, €73.60/TB
     expect(q.lines.map((l) => l.unitCents)).toEqual([1_840, 7_360]);
     // seats: 50 × €18.40 × 12 = €11,040; egress: 20 × €73.60 × 12 = €17,664 → €28,704

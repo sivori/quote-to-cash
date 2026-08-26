@@ -2,7 +2,7 @@ import { CustomerAccount, type Deal } from "./account";
 import { QuoteToCash, type ApprovalEvent } from "./pipeline";
 import { parseDeal, parseDeterministic, type ParsedDeal } from "./parse";
 import { Budget } from "./budget";
-import { price, fmt } from "./pricing";
+import { price, fmt, fxLabel } from "./pricing";
 import { isPaymentMethod, PAYMENT_METHODS, type PaymentMethod } from "./payments";
 import { CATALOG, REGIONS, TERMS } from "./catalog";
 import { dealsCsv, dealsPdf } from "./export";
@@ -123,7 +123,7 @@ function describe(d: Deal): string {
   const adj = [
     q.regionUpliftCents ? `${q.region} uplift +${$(q.regionUpliftCents)}` : `${q.region} (no uplift)`,
     q.termDiscountCents ? `${TERMS[q.term].label} −${$(q.termDiscountCents)}` : TERMS[q.term].label,
-    q.currency === "EUR" ? "quoted in EUR at the price-book rate" : "",
+    q.currency !== "USD" ? `FX ${fxLabel(q.fxBps, q.currency)} (price book ${q.priceBookVersion})` : "",
   ].filter(Boolean).join(", ");
   const gate = d.needsApproval ? `This is at or above the approval threshold, so it's waiting for a human to approve.` : `Under the approval threshold — auto-approved by policy; invoicing now.`;
   const warn = d.parsed.unresolved.length ? `\n⚠ ${d.parsed.unresolved.join("; ")}` : "";

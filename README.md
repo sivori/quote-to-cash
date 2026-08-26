@@ -44,10 +44,10 @@ Chips in the UI cover the paths: a small deal that auto-approves, the canonical 
 
 | Card | Behaviour |
 |---|---|
-| ···4242 | succeeds |
-| ···0341 | declines twice, pays on the third attempt (watch the reminder and warning go out) |
-| ···9995 | insufficient funds until the fourth attempt (final notice) |
-| ···0002 | `do_not_honor` — straight to collections |
+| Visa ···4242 | succeeds |
+| Mastercard ···0341 | declines twice, pays on the third attempt (watch the reminder and warning go out) |
+| Amex ···9995 | insufficient funds until the fourth attempt (final notice) |
+| Discover ···0002 | `do_not_honor` — straight to collections |
 
 ## Run it
 

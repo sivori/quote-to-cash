@@ -36,3 +36,12 @@ over the marketing site · light mode only. Spawned a research agent with that b
 > To make the demo compelling, let's be more concise with the introduction text to convey the functional flow without overwhelming the user.
 
 Cut the hero to one line naming the flow, and each section's help text to a sentence or two.
+
+**5.**
+
+> Provide a prompt for midjourney for a logo for this demo. In the control labels in top nav, use capitalization. For the "Pay with" dropdown selector, use corresponding logo icons for each selection.
+
+Wrote the Midjourney prompt (in the reply, not the repo). Capitalised the nav labels. Replaced the
+native select with a listbox showing a card mark per test card; the four cards are now four brands
+(Visa, Mastercard, Amex, Discover) drawn as schematic brand-coloured marks rather than the
+trademarked logos.
